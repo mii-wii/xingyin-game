@@ -27,10 +27,43 @@
 
       noiseBuffer = createNoise();
     }
-    if (ctx.state === "suspended") {
-      ctx.resume();
+    resume();
+  }
+
+  function resume() {
+    if (ctx && ctx.state !== "running" && typeof ctx.resume === "function") {
+      try {
+        const ret = ctx.resume();
+        if (ret && typeof ret.catch === "function") ret.catch(function () {});
+      } catch (err) {
+        /* 忽略恢复失败 */
+      }
     }
   }
+
+  /* 手机端首次触摸时彻底解锁音频（播放一帧静音 buffer） */
+  function unlock() {
+    init();
+    if (!ctx) return;
+    try {
+      const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(ctx.destination);
+      src.start(0);
+    } catch (err) {
+      /* 忽略解锁失败 */
+    }
+    if (ctx.state === "running") {
+      ["pointerdown", "touchstart", "click", "keydown"].forEach(function (type) {
+        window.removeEventListener(type, unlock, true);
+      });
+    }
+  }
+
+  ["pointerdown", "touchstart", "click", "keydown"].forEach(function (type) {
+    window.addEventListener(type, unlock, true);
+  });
 
   function createNoise() {
     const length = Math.floor(ctx.sampleRate * 1.2);
@@ -588,6 +621,7 @@
 
   function play(type, midi, when, dur, velocity) {
     if (!ctx) init();
+    resume();
     const start = Math.max(when, ctx.currentTime + 0.002);
     const vel = velocity == null ? 1 : velocity;
     const length = dur == null ? 0.3 : dur;
@@ -654,6 +688,10 @@
     now: now,
     play: play,
     stopAll: stopAll,
+    unlock: unlock,
+    state: function () {
+      return ctx ? ctx.state : "none";
+    },
     isReady: function () {
       return Boolean(ctx);
     }
