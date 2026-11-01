@@ -148,13 +148,23 @@
     }).length;
   }
 
-  function showToast(message) {
+  function showToast(message, duration) {
     toastEl.textContent = message;
     toastEl.classList.add("is-show");
     clearTimeout(showToast.timer);
     showToast.timer = setTimeout(function () {
       toastEl.classList.remove("is-show");
-    }, 2600);
+    }, duration || 2600);
+  }
+
+  /* iOS 静音模式会静音合成音，首次进入时提示一次 */
+  function hintIosSilentMode() {
+    const ua = navigator.userAgent;
+    const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if (!isIos) return;
+    setTimeout(function () {
+      showToast("没声音？请关闭 iOS 静音模式（控制中心铃铛）", 5000);
+    }, 1500);
   }
 
   /* ---------- 渲染 ---------- */
@@ -3021,6 +3031,7 @@
     const libTab = document.querySelector('.view-tab[data-view="library"]');
     if (libTab) libTab.hidden = true;
     roundBoot();
+    hintIosSilentMode();
   }
 
   init();
