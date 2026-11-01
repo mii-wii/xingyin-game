@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Logic · 编曲台</title>
+  <script>
+    if (window.self !== window.top) {
+      document.documentElement.classList.add("is-embedded");
+    }
+  </script>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="scene" aria-hidden="true"><div class="stars" id="stars"></div></div>
+
+  <main class="app">
+    <header class="lr-header">
+      <div class="lr-titlebar">
+        <span class="lr-icon-btn" aria-hidden="true">‹</span>
+        <div class="lr-title">
+          <span class="lr-name">Logic</span>
+          <span class="lr-meta" id="lrMeta">32 步音序器 · 4/4 · 循环</span>
+        </div>
+        <span class="lr-icon-btn" aria-hidden="true">⚙</span>
+      </div>
+
+      <nav class="view-tabs" aria-label="Logic 视图">
+        <button class="view-tab is-active" type="button" data-view="studio">编曲台</button>
+        <button class="view-tab" type="button" data-view="library">音乐库<span class="view-count" id="libCount">10</span></button>
+      </nav>
+
+      <div class="lr-transport">
+        <div class="lr-tempo">
+          <span class="lr-tempo-label">速度</span>
+          <span class="lr-tempo-value" id="bpmVal">96</span>
+          <input id="bpm" type="range" min="60" max="160" step="2" value="96" aria-label="速度" />
+        </div>
+        <button id="playBtn" class="lr-play" type="button">
+          <span class="play-icon" id="playIcon">▶</span>
+          <span id="playText">播放</span>
+        </button>
+        <button id="clearBtn" class="lr-clear" type="button">清空</button>
+      </div>
+    </header>
+
+    <div class="layout" id="studioView">
+      <section class="studio">
+        <div class="remix-bar" id="remixBar" hidden>
+          <span class="remix-dot"></span>
+          <div class="remix-info">
+            <b id="remixTitle">正在还原</b>
+            <span id="remixRange">0:08 之后 · 四段待补</span>
+          </div>
+          <button class="remix-check" type="button" data-remix-action="check">检查编曲</button>
+          <button class="remix-skip" type="button" data-remix-action="skip" hidden>跳过</button>
+          <button class="remix-reset" type="button" data-remix-action="reset" hidden>重来</button>
+          <button class="remix-ref" type="button" data-remix-action="ref" hidden>试听参考</button>
+          <button class="remix-save" type="button" data-remix-action="save">存私密版本</button>
+          <button class="remix-exit" type="button" data-remix-action="exit" aria-label="退出还原">✕</button>
+          <p class="remix-hint" id="remixHint" hidden></p>
+        </div>
+
+        <div class="studio-top">
+          <div>
+            <h2>音序器</h2>
+            <p id="statusText">还没有音符，先点亮第一颗小星星吧</p>
+          </div>
+          <div class="loop-badge"><span class="pulse-dot"></span>循环</div>
+        </div>
+
+        <div class="reaction-bar" id="reactionBar" hidden>
+          <span class="reaction-from" id="reactionFrom" hidden></span>
+          <p class="reaction-text" id="reactionText"></p>
+        </div>
+
+        <div class="kkt-chips" id="kktChips" hidden></div>
+
+        <div class="tracks" id="tracks"></div>
+
+        <div class="card-panel" id="cardPanel" hidden></div>
+
+        <div class="studio-tip">
+          <span>点按点亮音符</span><span>拖动连续绘制</span><span>右键擦除</span><span>空格播放</span>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>调式</h2>
+            <span class="hint">换一个颜色试试</span>
+          </div>
+          <div class="select-row">
+            <label class="field">
+              <span>主音</span>
+              <select id="rootSelect"></select>
+            </label>
+            <label class="field">
+              <span>音阶</span>
+              <select id="scaleSelect">
+                <option value="majorPent">大调五声</option>
+                <option value="minorPent">小调五声</option>
+                <option value="major">自然大调</option>
+                <option value="minor">自然小调</option>
+                <option value="blues">蓝调</option>
+              </select>
+            </label>
+          </div>
+          <div class="note-legend" id="noteLegend"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>灵感盒子</h2>
+            <span class="hint">不想从零开始？</span>
+          </div>
+          <div class="preset-list" id="presetList"></div>
+          <button id="randomBtn" class="btn-fun" type="button">✦ 随机来一段</button>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>作品存档</h2>
+            <span class="hint">保存在这台设备</span>
+          </div>
+          <div class="save-row">
+            <button id="saveBtn" class="btn-soft" type="button">保存</button>
+            <button id="loadBtn" class="btn-soft" type="button">读取</button>
+          </div>
+          <button id="midiBtn" class="btn-soft btn-wide" type="button">导出 MIDI 文件</button>
+        </section>
+      </aside>
+    </div>
+
+    <section class="library" id="libraryView" hidden>
+      <div class="library-head">
+        <div>
+          <h2>音乐库</h2>
+          <p>来自影像的 10 段原音 · 音频一比特未改</p>
+        </div>
+        <span class="library-badge">原音</span>
+      </div>
+
+      <div class="library-list" id="libraryList"></div>
+
+      <article class="song-sheet" id="songSheet" hidden></article>
+
+      <audio id="libAudio" preload="metadata" playsinline></audio>
+    </section>
+  </main>
+
+  <button class="notes-tab" id="notesTab" type="button" hidden aria-controls="notesDrawer">
+    <span>备注</span>
+    <b id="notesCount">0</b>
+  </button>
+
+  <div class="notes-scrim" id="notesScrim" hidden></div>
+
+  <aside class="notes-drawer" id="notesDrawer" hidden aria-label="编曲备注">
+    <div class="notes-head">
+      <div>
+        <h2>编曲备注</h2>
+        <span class="hint">按段留档 · 自动保存</span>
+      </div>
+      <button class="notes-close" id="notesClose" type="button" aria-label="关闭备注">✕</button>
+    </div>
+    <div class="notes-history" id="notesHistory"></div>
+    <div class="notes-compose">
+      <textarea id="noteInput" rows="2" placeholder="写一句备注…"></textarea>
+      <button class="note-add" id="noteAdd" type="button">记下</button>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="audio.js"></script>
+  <script src="songs.js"></script>
+  <script src="story.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Dream Phone · 星音手机</title>
+  <link rel="stylesheet" href="phone.css" />
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 7 3.5C19 15.6 12 20 12 20z"/></symbol>
+    <symbol id="i-comment" viewBox="0 0 24 24"><path d="M21 12a8.5 8.5 0 0 1-8.5 8.5c-1.5 0-3-.4-4.3-1.1L3 21l1.6-5.2A8.5 8.5 0 1 1 21 12z"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21H3z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 4 7 12l8 8"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-flash" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+    <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="14" r="4"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M5 3h4l2 5-3 2c1 3 3 5 6 6l2-3 5 2v4c0 2-2 3-4 3C9 22 2 15 2 7c0-2 1-4 3-4z"/></symbol>
+    <symbol id="i-message" viewBox="0 0 24 24"><path d="M4 4h16v12H9l-5 4z"/></symbol>
+    <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M16 8l-2.5 5.5L8 16l2.5-5.5z"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7"/><rect x="13" y="4" width="7" height="7"/><rect x="4" y="13" width="7" height="7"/><rect x="13" y="13" width="7" height="7"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c4 4 4 14 0 18M12 3c-4 4-4 14 0 18"/></symbol>
+  </svg>
+
+  <div class="stage">
+    <div class="device" id="device">
+      <div class="screen theme" id="screen" data-state="locked">
+        <div class="wallpaper" aria-hidden="true">
+          <span class="bokeh b1"></span>
+          <span class="bokeh b2"></span>
+          <span class="bokeh b3"></span>
+          <span class="bokeh b4"></span>
+          <span class="wall-shade"></span>
+          <span class="wall-grain"></span>
+        </div>
+
+        <div class="island"><span class="island-lens"></span></div>
+
+        <section class="home-screen" id="homeScreen" aria-label="主屏幕">
+          <div class="status-bar theme-dark">
+            <span class="status-time" data-clock>20:56</span>
+            <span class="status-right">
+              <span class="signal"><i></i><i></i><i></i><i></i></span>
+              <span class="network">5G</span>
+              <span class="battery"><b></b></span>
+            </span>
+          </div>
+
+          <div class="home-grid" id="homeGrid"></div>
+
+          <div class="home-bottom">
+            <button class="search-pill" id="searchBtn" type="button">
+              <svg class="ui-icon"><use href="#i-search"></use></svg>
+              <span>搜索</span>
+            </button>
+            <div class="dock" id="dock"></div>
+          </div>
+
+          <button class="home-bar" id="homeBar" type="button" aria-label="主屏幕"></button>
+        </section>
+
+        <section class="lock-screen" id="lockScreen" aria-label="锁屏">
+          <div class="status-bar theme-dark">
+            <span class="status-time" data-clock>20:56</span>
+            <span class="status-right">
+              <span class="signal"><i></i><i></i><i></i><i></i></span>
+              <span class="network">5G</span>
+              <span class="battery"><b></b></span>
+            </span>
+          </div>
+
+          <div class="lock-content">
+            <div class="lock-glyph">
+              <svg class="ui-icon"><use href="#i-lock"></use></svg>
+            </div>
+            <div class="lock-clock" data-clock>20:56</div>
+            <div class="lock-date" data-date>10月30日 星期五</div>
+          </div>
+
+          <div class="lock-bottom">
+            <p class="lock-quote">今晚也要加油呀 <span>♡</span></p>
+            <button class="unlock-hint" id="unlockHint" type="button">
+              <span class="hint-arrow">↑</span> 轻扫或点击解锁
+            </button>
+            <div class="quick-row">
+              <button class="quick-btn" id="lockFlash" type="button" aria-label="手电筒">
+                <svg class="ui-icon"><use href="#i-flash"></use></svg>
+              </button>
+              <button class="quick-btn" id="lockCamera" type="button" aria-label="相机">
+                <svg class="ui-icon"><use href="#i-camera"></use></svg>
+              </button>
+            </div>
+            <div class="home-bar"></div>
+          </div>
+        </section>
+
+        <section class="passcode-screen" id="passcodeScreen" aria-label="密码解锁">
+          <div class="passcode-top">
+            <button class="pass-cancel" id="passCancel" type="button">取消</button>
+          </div>
+          <div class="passcode-body">
+            <div class="pass-icon">
+              <svg class="ui-icon"><use href="#i-lock"></use></svg>
+            </div>
+            <h2>输入密码</h2>
+            <p class="pass-sub">输入 7 位密码以解锁</p>
+            <div class="pass-dots" id="passDots"></div>
+            <div class="pass-error" id="passError"></div>
+            <div class="keypad" id="keypad">
+              <button class="key" type="button" data-key="1"><span>1</span><small>&nbsp;</small></button>
+              <button class="key" type="button" data-key="2"><span>2</span><small>ABC</small></button>
+              <button class="key" type="button" data-key="3"><span>3</span><small>DEF</small></button>
+              <button class="key" type="button" data-key="4"><span>4</span><small>GHI</small></button>
+              <button class="key" type="button" data-key="5"><span>5</span><small>JKL</small></button>
+              <button class="key" type="button" data-key="6"><span>6</span><small>MNO</small></button>
+              <button class="key" type="button" data-key="7"><span>7</span><small>PQRS</small></button>
+              <button class="key" type="button" data-key="8"><span>8</span><small>TUV</small></button>
+              <button class="key" type="button" data-key="9"><span>9</span><small>WXYZ</small></button>
+              <span class="key-empty"></span>
+              <button class="key" type="button" data-key="0"><span>0</span><small>&nbsp;</small></button>
+              <button class="key key-del" type="button" data-key="del" aria-label="删除">
+                <svg class="ui-icon"><use href="#i-back"></use></svg>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <div class="app-layer" id="appLayer"></div>
+
+        <section class="search-layer" id="searchLayer" aria-label="搜索应用">
+          <div class="search-head">
+            <div class="search-field">
+              <svg class="ui-icon"><use href="#i-search"></use></svg>
+              <input id="appSearch" type="text" placeholder="搜索 App" autocomplete="off" />
+            </div>
+            <button class="search-cancel" id="searchCancel" type="button">取消</button>
+          </div>
+          <div class="search-results" id="searchResults"></div>
+        </section>
+
+        <div class="phone-toast" id="phoneToast" role="status"></div>
+      </div>
+
+      <span class="side-btn side-power" aria-hidden="true"></span>
+      <span class="side-btn side-vol-up" aria-hidden="true"></span>
+      <span class="side-btn side-vol-down" aria-hidden="true"></span>
+      <span class="side-btn side-action" aria-hidden="true"></span>
+    </div>
+
+    <p class="device-caption">锁屏密码 <b>5300810</b> · 点击或上滑解锁</p>
+  </div>
+
+  <script src="phone.js"></script>
+</body>
+</html>
