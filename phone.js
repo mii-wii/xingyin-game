@@ -789,6 +789,67 @@
 
   /* ================= 聊天 ================= */
   const THREADS = {
+    wechat: {
+      lulu: {
+        name: "小鹿",
+        avatar: "鹿",
+        tone: "av-1",
+        time: "20:41",
+        unread: 1,
+        msgs: [
+          { from: "you", text: "今晚在干嘛呀？" },
+          { from: "me", text: "在Logic里编一段旋律，已经循环十遍了。" },
+          { from: "you", text: "发我听听！" },
+          { from: "me", text: "等我把小提琴那轨加上就发你 ♪" }
+        ],
+        reply: "好呀，我等你！"
+      },
+      studio: {
+        name: "Logic群",
+        avatar: "音",
+        tone: "av-5",
+        time: "19:58",
+        unread: 3,
+        msgs: [
+          { from: "you", text: "新加的唢呐音色太顶了哈哈哈" },
+          { from: "you", text: "谁用二胡写一段？" },
+          { from: "me", text: "我来，正在试中提琴 + 二胡的组合。" }
+        ],
+        reply: "期待！"
+      },
+      momo: {
+        name: "桃桃",
+        avatar: "桃",
+        tone: "av-2",
+        time: "18:22",
+        msgs: [
+          { from: "you", text: "今天的晚霞好像你的壁纸" },
+          { from: "me", text: "我也觉得，暖暖的。" }
+        ],
+        reply: "那你早点休息呀～"
+      },
+      mover: {
+        name: "微信运动",
+        avatar: "走",
+        tone: "av-6",
+        time: "17:04",
+        msgs: [
+          { from: "you", text: "你今天走了 12048 步，占领了 6 位朋友的封面。" }
+        ],
+        reply: "继续加油！"
+      },
+      file: {
+        name: "文件传输助手",
+        avatar: "文",
+        tone: "av-8",
+        time: "昨天",
+        msgs: [
+          { from: "me", text: "[文件] 星音小样 2026.mid" },
+          { from: "me", text: "[链接] Logic · 编曲入口" }
+        ],
+        reply: "已保存。"
+      }
+    },
     kakao: {
       mountain: {
         name: "간지폭풍 GIANT MOUNTAIN",
@@ -803,6 +864,40 @@
           { from: "you", text: "내일도 같이 작업해？（明天也一起做音乐吗？）" }
         ],
         reply: "좋아, 내일 봐！（好，明天见！）"
+      }
+    },
+    messages: {
+      mom: {
+        name: "妈妈",
+        avatar: "妈",
+        tone: "av-4",
+        time: "20:20",
+        msgs: [
+          { from: "you", text: "吃饭了吗？" },
+          { from: "me", text: "吃过啦，正在做音乐。" },
+          { from: "you", text: "早点睡，别太晚。" }
+        ],
+        reply: "知道啦 ♡"
+      },
+      courier: {
+        name: "快递小哥",
+        avatar: "快",
+        tone: "av-6",
+        time: "18:44",
+        msgs: [
+          { from: "you", text: "您的包裹已放在门口，请注意查收。" }
+        ],
+        reply: "收到，谢谢！"
+      },
+      bank: {
+        name: "1069 服务号",
+        avatar: "10",
+        tone: "av-8",
+        time: "昨天",
+        msgs: [
+          { from: "you", text: "【验证码】您正在登录Logic，验证码 530081，请勿泄露。" }
+        ],
+        reply: "不用回复。"
       }
     }
   };
