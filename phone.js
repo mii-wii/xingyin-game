@@ -323,6 +323,7 @@
     clearPassError();
     screenEl.dataset.state = "unlocked";
     unlockChime();
+    if (window.Drama) updateStoryLayer();
     if (navigator.vibrate) navigator.vibrate(18);
     setTimeout(function () {
       showToast("欢迎回来，梦女 ♡");
@@ -386,6 +387,8 @@
     state.app = null;
     state.chat = null;
     state.noteEditing = null;
+    if (window.Drama) drama.setOpen("");
+    updateStoryLayer();
     screenEl.dataset.state = "unlocked";
     clearTimeout(closeTimer);
     closeTimer = setTimeout(function () {
@@ -403,6 +406,8 @@
     state.app = id;
     state.chat = null;
     state.noteEditing = null;
+    if (window.Drama) drama.setOpen("");
+    updateStoryLayer();
     renderApp();
     screenEl.dataset.state = "app";
     beep(980, 0.05, "sine", 0.03);
@@ -469,10 +474,29 @@
     let title = app.name;
     let backAction = "close";
     let note = "";
+    let pageKind = "";
+    let navRight = "";
+    let bottomBar = "";
+    const inKakaoChat = app.id === "kakao" && state.chat && state.chat.app === "kakao";
+
+    if (app.id === "kakao" && !inKakaoChat) {
+      title = "聊天";
+      pageKind = " kkt-root";
+      backAction = "";
+      navRight = '<span class="kkt-nav-actions">' +
+        '<svg class="ui-icon"><use href="#i-search"></use></svg>' +
+        '<svg class="ui-icon"><use href="#i-plus"></use></svg>' +
+        "</span>";
+      bottomBar = kktTabsHTML();
+    }
 
     if (state.chat && app.id === state.chat.app) {
       const thread = THREADS[app.id] && THREADS[app.id][state.chat.key];
       if (thread) title = thread.name;
+      if (inKakaoChat) {
+        const castKey = state.chat.key;
+        title = (drama && drama.cast[castKey]) ? drama.cast[castKey].name : title;
+      }
       backAction = "chat-back";
     }
 
@@ -483,14 +507,17 @@
     }
 
     return '<div class="app-page' + (app.id === "camera" ? " camera-app" : "") +
-      (app.id === "calculator" ? " calc-app" : "") + '" data-app="' + app.id + '">' +
+      (app.id === "calculator" ? " calc-app" : "") + pageKind + '" data-app="' + app.id + '">' +
       statusBarHTML() +
       '<div class="app-nav">' +
-      '<button class="nav-back" type="button" data-action="' + backAction + '" aria-label="返回">‹</button>' +
+      (backAction ? '<button class="nav-back" type="button" data-action="' + backAction + '" aria-label="返回">‹</button>'
+        : '<span class="nav-back-ghost"></span>') +
       '<h1 class="nav-title">' + title + "</h1>" +
       (note ? '<span class="nav-note">' + note + "</span>" : "") +
+      navRight +
       "</div>" +
       '<div class="app-body">' + body + "</div>" +
+      bottomBar +
       '<button class="app-homebar" type="button" data-action="close" aria-label="回到主屏幕"></button>' +
       "</div>";
   }
@@ -617,8 +644,48 @@
     const chatRow = event.target.closest("[data-chat]");
     if (chatRow) {
       state.chat = { app: state.app, key: chatRow.dataset.chat };
+      if (state.app === "kakao" && window.Drama) {
+        drama.setOpen(chatRow.dataset.chat);
+      }
       renderApp();
+      updateStoryLayer();
       beep(920, 0.04, "sine", 0.03);
+      return;
+    }
+
+    const tab = event.target.closest("[data-kkt-tab]");
+    if (tab) {
+      if (tab.dataset.kktTab !== "chats") showToast("这部分暂时还没有内容");
+      return;
+    }
+
+    const choice = event.target.closest("[data-choice]");
+    if (choice) {
+      const index = Number(choice.dataset.choice);
+      if (window.Drama && drama.answer(index)) {
+        renderApp();
+        updateStoryLayer();
+        beep(1000, 0.05, "sine", 0.03);
+      }
+      return;
+    }
+
+    const storyBtn = event.target.closest("[data-story-view]");
+    if (storyBtn) {
+      openStoryViewer(Number(storyBtn.dataset.storyView));
+      return;
+    }
+
+    const likePostBtn = event.target.closest("[data-like-post]");
+    if (likePostBtn) {
+      const liked = likePostBtn.classList.toggle("is-liked");
+      const label = likePostBtn.querySelector("[data-like-count]");
+      if (label) {
+        const base = Number(label.dataset.base || label.textContent || 0);
+        if (!label.dataset.base) label.dataset.base = String(base);
+        label.textContent = String(base + (liked ? 1 : 0)) || "";
+      }
+      beep(liked ? 1040 : 600, 0.05, "sine", 0.03);
       return;
     }
 
@@ -903,6 +970,7 @@
   };
 
   function chatListHTML(app) {
+    if (app.id === "kakao" && window.Drama) return dramaChatList();
     const threads = THREADS[app.id] || {};
     let html = '<div class="chat-list">';
     Object.keys(threads).forEach(function (key) {
@@ -925,6 +993,7 @@
   }
 
   function chatBodyHTML(app) {
+    if (app.id === "kakao" && window.Drama) return dramaChatBody();
     if (!state.chat || state.chat.app !== app.id) {
       return chatListHTML(app);
     }
@@ -950,6 +1019,16 @@
     if (!input) return;
     const text = input.value.trim();
     if (!text) return;
+
+    if (state.chat.app === "kakao" && window.Drama) {
+      const list = window.Drama.state.threads[state.chat.key];
+      if (!list) return;
+      list.push({ from: "me", text: text, img: "" });
+      window.Drama.save();
+      renderApp();
+      beep(1040, 0.06, "sine", 0.035);
+      return;
+    }
 
     const thread = THREADS[state.chat.app] && THREADS[state.chat.app][state.chat.key];
     if (!thread) return;
@@ -981,7 +1060,9 @@
 
     if (action === "chat-back") {
       state.chat = null;
+      if (window.Drama) drama.setOpen("");
       renderApp();
+      updateStoryLayer();
       return;
     }
 
@@ -1180,6 +1261,7 @@
   ];
 
   function instagramBodyHTML() {
+    if (window.Drama) return dramaFeedHTML();
     const avatar = '<div class="ig-avatar"><span><img src="' + IG_AVATAR + '" alt="' + IG_NAME + '"></span></div>';
 
     const tiles = IG_POSTS.map(function (post, index) {
@@ -1417,12 +1499,19 @@
         "</div>";
     }
 
-    if (!state.notes.length) {
+    if (!state.notes.length && !(window.Drama && drama.state.notes.length)) {
       return '<p class="search-empty">还没有备忘录</p>' +
         '<button class="note-save" type="button" data-action="note-new">新建备忘录</button>';
     }
 
-    return state.notes.map(function (note, index) {
+    const storyNotes = window.Drama ? drama.state.notes.map(function (note) {
+      return '<div class="note-row story-note">' +
+        "<b>星音提醒</b>" +
+        "<span>" + escapeHTML(note.text) + "</span>" +
+        "<i>剧情</i></div>";
+    }).join("") : "";
+
+    return storyNotes + state.notes.map(function (note, index) {
       return '<button class="note-row" type="button" data-note-open="' + index + '">' +
         "<b>" + escapeHTML(note.title) + "</b>" +
         "<span>" + escapeHTML(note.body.replace(/\n/g, " ")).slice(0, 46) + "</span>" +
@@ -1548,6 +1637,359 @@
       "</div>";
   }
 
+  /* ================= 剧情：KKT 与 Instagram ================= */
+  const drama = window.Drama;
+  const storyLayer = document.createElement("div");
+  storyLayer.className = "story-layer";
+  screenEl.appendChild(storyLayer);
+
+  function dramaAvatar(key, extra) {
+    const c = (drama.cast && drama.cast[key]) || { name: key, letter: "?", tone: "av-1" };
+    if (c.avatar) {
+      return '<span class="avatar avatar-img ' + (extra || "") + '">' +
+        '<img src="' + c.avatar + '" alt="" onerror="this.style.display=\'none\'" /><b>' + c.letter + "</b></span>";
+    }
+    return '<span class="avatar ' + (c.tone || "av-1") + " " + (extra || "") + '">' + c.letter + "</span>";
+  }
+
+  function kktTabsHTML() {
+    return '<div class="kkt-tabs">' +
+      '<button class="kkt-tab" type="button" data-kkt-tab="friends"><b>好友</b></button>' +
+      '<button class="kkt-tab is-on" type="button" data-kkt-tab="chats"><b>聊天</b></button>' +
+      '<button class="kkt-tab" type="button" data-kkt-tab="feed"><b>动态</b></button>' +
+      '<button class="kkt-tab" type="button" data-kkt-tab="more"><b>更多</b></button>' +
+      "</div>";
+  }
+
+  function dramaChatList() {
+    const st = drama.state;
+    let html = '<div class="chat-list kkt-list">' +
+      '<div class="kkt-searchbar">' +
+      '<svg class="ui-icon"><use href="#i-search"></use></svg>' +
+      "<span>搜索聊天</span></div>";
+    let rows = "";
+    if (st.request) {
+      rows += '<button class="list-row" type="button" data-chat="ts">' +
+        dramaAvatar("ts") +
+        '<span class="row-main">' +
+        '<span class="row-title">韩泰山 <span class="badge">1</span></span>' +
+        '<span class="row-sub">好友申请 · ' + escapeHTML(st.request.text) + "</span>" +
+        "</span><span class=\"row-meta\">现在</span></button>";
+    }
+    ["ts", "wn", "ys"].forEach(function (key) {
+      const list = st.threads[key] || [];
+      if (!list.length) return;
+      const last = list[list.length - 1];
+      const unread = st.unread[key] || 0;
+      const preview = last.img ? "[图片]" : last.text;
+      rows += '<button class="list-row" type="button" data-chat="' + key + '">' +
+        dramaAvatar(key) +
+        '<span class="row-main">' +
+        '<span class="row-title">' + drama.cast[key].name +
+        (unread ? ' <span class="badge">' + unread + "</span>" : "") + "</span>" +
+        '<span class="row-sub">' + escapeHTML(preview).slice(0, 32) + "</span>" +
+        "</span><span class=\"row-meta\">现在</span></button>";
+    });
+    if (!rows) {
+      rows = '<div class="kkt-empty"><span>还没有聊天</span><em>有人加你好友后会出现在这里</em></div>';
+    }
+    html += rows + "</div>";
+    return html;
+  }
+
+  function dramaChatBody() {
+    if (!state.chat) return dramaChatList();
+    const key = state.chat.key;
+    const st = drama.state;
+    const list = st.threads[key] || [];
+    const cast = drama.cast[key] || { name: key };
+    let html = '<div class="chat-screen kkt-screen">';
+    if (st.request && key === "ts" && !list.length) {
+      html += '<div class="kkt-request">' +
+        '<span class="kkt-request-title">好友申请</span>' +
+        '<span class="kkt-request-text">' + escapeHTML(st.request.text) + "</span>" +
+        '<span class="kkt-request-actions">' +
+        '<button class="kkt-btn ghost" type="button" data-choice="1">拒绝</button>' +
+        '<button class="kkt-btn" type="button" data-choice="0">同意</button>' +
+        "</span></div>";
+    }
+    list.forEach(function (m) {
+      const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
+      if (m.from === "me") {
+        html += '<div class="kkt-row me"><div class="kkt-bubble me">' + escapeHTML(m.text) + img + "</div></div>";
+      } else {
+        html += '<div class="kkt-row you">' + dramaAvatar(key, "kkt-avatar") +
+          '<div class="kkt-stack"><span class="kkt-name">' + escapeHTML(cast.name) + "</span>" +
+          '<div class="kkt-bubble">' + escapeHTML(m.text) + img + "</div></div></div>";
+      }
+    });
+    const pend = st.pending;
+    if (pend && pend.kind === "ask" && pend.thread === key && !pend.friend) {
+      html += '<div class="kkt-choices">';
+      pend.options.forEach(function (opt, i) {
+        html += '<button class="kkt-choice" type="button" data-choice="' + i + '">' +
+          escapeHTML(opt.label) + "</button>";
+      });
+      html += "</div>";
+    }
+    html += "</div>" +
+      '<div class="chat-input-row kkt-input-row">' +
+      '<input class="chat-input" id="chatInput" type="text" placeholder="输入消息…" autocomplete="off" />' +
+      '<button class="chat-send" type="button" data-action="send-chat">发送</button>' +
+      "</div>";
+    return html;
+  }
+
+  function playerHandle(name) {
+    const raw = String(name || "").trim();
+    const latin = raw.replace(/[^a-zA-Z0-9._]/g, "").toLowerCase();
+    if (latin.length >= 2) return "@" + latin;
+    let h = 0;
+    for (let i = 0; i < raw.length; i += 1) h = (h * 31 + raw.charCodeAt(i)) % 10000;
+    return "@music_" + ("0000" + h).slice(-4);
+  }
+
+  function igAuthor(key) {
+    const st = drama.state;
+    if (key === "me") {
+      return {
+        name: (st.name || "我") + "（我）",
+        handle: playerHandle(st.name),
+        avatar: "",
+        letter: (st.name || "我").slice(0, 1)
+      };
+    }
+    const c = drama.cast[key] || { name: key, letter: "?" };
+    const handles = {
+      ts: "giant.mountain.ts",
+      wn: "woonhak.kim",
+      myng: "myng",
+      ppparksh: "ppparksh",
+      u: "u.livehouse"
+    };
+    return { name: c.name, handle: "@" + (handles[key] || key), avatar: c.avatar, letter: c.letter };
+  }
+
+  function igMediaHTML(post) {
+    if (post.img) {
+      return '<div class="post-media"><img src="' + post.img + '" alt="" onerror="this.style.display=\'none\'" />' +
+        '<span class="post-media-fallback">' + escapeHTML(post.cap || "照片") + "</span></div>";
+    }
+    if (post.rain) {
+      return '<div class="post-media post-rain"><span>雨</span></div>';
+    }
+    if (post.announce) {
+      return '<div class="post-media post-announce"><span>LIVE</span><b>u livehouse</b><i>ep000 · 专场演出</i></div>';
+    }
+    return "";
+  }
+
+  function dramaFeedHTML() {
+    const st = drama.state;
+    const stories = st.feed.filter(function (p) { return p.story; });
+    const posts = st.feed.filter(function (p) { return !p.story; });
+    const me = igAuthor("me");
+
+    const ring = stories.map(function (s, i) {
+      return '<button class="ig-story" type="button" data-story-view="' + i + '">' +
+        '<span class="ig-story-ring">' + igMediaHTML(s) + "</span>" +
+        '<span class="ig-story-label">' + escapeHTML(st.name || "我") + "</span></button>";
+    }).join("");
+
+    const feed = posts.map(function (post) {
+      const who = igAuthor(post.who);
+      const rows = post.comments.map(function (c) {
+        const cw = igAuthor(c.who);
+        return '<div class="post-comment"><b>' + escapeHTML(cw.handle) + "</b> " + escapeHTML(c.text) + "</div>";
+      }).join("");
+      return '<article class="post" data-post="' + post.id + '">' +
+        '<div class="post-head">' +
+        '<span class="post-avatar avatar-img">' +
+        (who.avatar ? '<img src="' + who.avatar + '" alt="" /><b>' + who.letter + "</b>" : "<b>" + who.letter + "</b>") +
+        "</span>" +
+        "<div>" +
+        '<div class="post-name">' + escapeHTML(who.name) + "</div>" +
+        '<div class="post-time">' + escapeHTML(post.place || "首尔") + " · 刚刚</div>" +
+        "</div></div>" +
+        igMediaHTML(post) +
+        '<div class="post-actions">' +
+        '<button class="like" type="button" data-like-post="' + post.id + '">' +
+        '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-heart"></use></svg>' +
+        '<span data-like-count>' + (post.likes.length || "") + "</span></button>" +
+        '<button type="button" data-action="safari-topic" data-tip="评论按剧情解锁">' +
+        '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-comment"></use></svg>' +
+        "<span>" + post.comments.length + "</span></button>" +
+        '<button type="button" data-action="safari-topic" data-tip="链接已复制">' +
+        '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-share"></use></svg><span>分享</span></button>' +
+        "</div>" +
+        '<div class="post-caption"><b>' + escapeHTML(who.handle) + "</b> " + escapeHTML(post.caption) + "</div>" +
+        rows +
+        "</article>";
+    }).join("");
+
+    const empty = !stories.length && !posts.length
+      ? '<p class="search-empty">还没有动态，先去写歌吧</p>'
+      : "";
+
+    return '<div class="ig-top">' +
+      '<span class="ig-dot"></span>' +
+      '<div class="ig-me"><b>' + escapeHTML(me.name) + "</b><i>" + escapeHTML(me.handle) + "</i></div>" +
+      "</div>" +
+      (ring ? '<div class="ig-stories">' + ring + "</div>" : "") +
+      empty + feed;
+  }
+
+  /* 快拍查看层 */
+  function openStoryViewer(index) {
+    const st = drama.state;
+    const story = st.feed.filter(function (p) { return p.story; })[index];
+    if (!story) return;
+    storyLayer.innerHTML = '<div class="story-viewer" data-close-viewer>' +
+      '<div class="story-viewer-top"><span>' + escapeHTML(igAuthor(story.who).name) + "</span>" +
+      '<button type="button" data-close-viewer>×</button></div>' +
+      '<div class="story-viewer-body">' + igMediaHTML(story) + "</div>" +
+      '<div class="story-viewer-cap">' + escapeHTML(story.caption) + "</div></div>";
+  }
+
+  /* 剧情任务卡 / 提示 */
+  let querySeq = 0;
+  const queryWaiters = {};
+
+  function postToMusic(message) {
+    const frame = appLayer.querySelector(".music-frame");
+    if (frame && frame.contentWindow) {
+      frame.contentWindow.postMessage(message, "*");
+      return true;
+    }
+    return false;
+  }
+
+  function queryStats(cb, retry) {
+    if (!postToMusic({ source: "phone-story", type: "query", id: "probe" })) {
+      const frame = appLayer.querySelector(".music-frame");
+      if (!frame && !retry) {
+        openApp("music");
+        setTimeout(function () { queryStats(cb, true); }, 900);
+        return;
+      }
+      cb({ bass: 0, drums: 0 });
+      return;
+    }
+    const id = "q" + (querySeq += 1);
+    queryWaiters[id] = cb;
+    postToMusic({ source: "phone-story", type: "query", id: id });
+    setTimeout(function () {
+      if (queryWaiters[id]) {
+        delete queryWaiters[id];
+        cb({ bass: 0, drums: 0 });
+      }
+    }, 1200);
+  }
+
+  function performStoryAction(id) {
+    const st = drama.state;
+    if (id === "start-round2") {
+      drama.action(id);
+      openApp("music");
+      setTimeout(function () {
+        postToMusic({ source: "phone-story", type: "round2" });
+      }, 800);
+      showToast("在编曲器里完成第二轮，四段都要提交");
+    } else if (id === "send-fix") {
+      queryStats(function (stats) {
+        if (st.flags.fixBase === undefined) st.flags.fixBase = stats.drums;
+        if (stats.drums <= st.flags.fixBase) {
+          showToast("先把第二段的鼓改密一点，再发给他");
+          return;
+        }
+        drama.action(id);
+        renderApp();
+        updateStoryLayer();
+        beep(1040, 0.06, "sine", 0.035);
+      });
+      return;
+    } else {
+      drama.action(id);
+    }
+    renderApp();
+    updateStoryLayer();
+  }
+
+  function updateStoryLayer() {
+    if (!drama) return;
+    const st = drama.state;
+    if (!st.name) {
+      storyLayer.classList.add("is-open");
+      storyLayer.innerHTML = '<div class="story-modal"><div class="story-modal-card name-card">' +
+        "<h2>欢迎来到模拟手机</h2>" +
+        "<p>先告诉我你的名字。之后聊天时，大家会用这个名字称呼你。</p>" +
+        '<input id="storyName" maxlength="10" placeholder="输入你的名字" autocomplete="off" />' +
+        '<button class="kkt-btn" type="button" data-name-ok>进入手机</button>' +
+        "</div></div>";
+      return;
+    }
+    storyLayer.classList.add("is-open");
+    if (st.modal) {
+      storyLayer.innerHTML = '<div class="story-modal"><div class="story-modal-card">' +
+        "<p>" + escapeHTML(st.modal) + "</p>" +
+        '<button class="kkt-btn" type="button" data-modal-ok>知道了</button>' +
+        "</div></div>";
+      return;
+    }
+    const pend = st.pending;
+    if (pend && pend.kind === "action" && screenEl.dataset.state === "unlocked") {
+      if (pend.id === "send-fix" && st.flags.fixBase === undefined) {
+        queryStats(function (stats) {
+          if (st.flags.fixBase === undefined) {
+            st.flags.fixBase = stats.drums;
+            drama.save();
+          }
+        });
+      }
+      storyLayer.innerHTML = '<div class="story-task">' +
+        '<span class="story-task-text">' + escapeHTML(pend.hint) + "</span>" +
+        '<button class="kkt-btn" type="button" data-story-act="' + pend.id + '">' +
+        escapeHTML(pend.label) + "</button></div>";
+      return;
+    }
+    storyLayer.classList.remove("is-open");
+    storyLayer.innerHTML = "";
+  }
+
+  storyLayer.addEventListener("click", function (event) {
+    if (event.target.closest("[data-close-viewer]")) {
+      storyLayer.classList.remove("is-open");
+      storyLayer.innerHTML = "";
+      return;
+    }
+    const nameOk = event.target.closest("[data-name-ok]");
+    if (nameOk) {
+      const input = storyLayer.querySelector("#storyName");
+      const value = input ? input.value.trim() : "";
+      if (!value) {
+        showToast("先输入名字");
+        return;
+      }
+      drama.setName(value);
+      drama.step();
+      updateStoryLayer();
+      renderApp();
+      showToast("你好，" + value);
+      return;
+    }
+    const modalOk = event.target.closest("[data-modal-ok]");
+    if (modalOk) {
+      drama.state.modal = null;
+      drama.save();
+      updateStoryLayer();
+      return;
+    }
+    const actBtn = event.target.closest("[data-story-act]");
+    if (actBtn) {
+      performStoryAction(actBtn.dataset.storyAct);
+    }
+  });
+
   /* ================= 来自编曲器（iframe）的故事消息 ================= */
   const kktBanner = document.createElement("div");
   kktBanner.className = "kkt-banner";
@@ -1595,8 +2037,39 @@
     if (d.type === "kkt") {
       addKktMessage(d.thread || "star", d.text);
       showKktBanner(d.thread || "star");
+      return;
+    }
+    if (d.type === "query-result") {
+      const cb = queryWaiters[d.id];
+      if (cb) {
+        delete queryWaiters[d.id];
+        cb({ bass: Number(d.bass) || 0, drums: Number(d.drums) || 0 });
+      }
+      return;
+    }
+    if (d.type === "story-event") {
+      if (d.event === "section-done" && Number(d.section) >= 1) {
+        drama.event("section1", { bass: d.bass, drums: d.drums });
+      }
+      if (d.event === "round-done") {
+        drama.event(Number(d.round) === 2 ? "round2done" : "round1", {
+          bass: d.bass,
+          drums: d.drums,
+          melody: d.melody
+        });
+      }
+      renderApp();
+      updateStoryLayer();
+      if (drama.state.pending && drama.state.pending.thread) {
+        showKktBanner(drama.state.pending.thread);
+      }
     }
   }
 
   window.addEventListener("message", onLogicMessage);
+
+  if (window.Drama) {
+    drama.step();
+    updateStoryLayer();
+  }
 })();

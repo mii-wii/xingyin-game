@@ -67,6 +67,7 @@
   const roundState = {
     active: false,
     finished: false,
+    round: 1,
     section: 0,
     passed: [false, false, false, false],
     notes: [],
@@ -1578,6 +1579,16 @@
     }
   }
 
+  /* 给手机的剧情事件：段落完成、整轮完成、状态查询 */
+  function storyEvent(name, payload) {
+    storyNotify("story-event", Object.assign({ event: name }, payload || {}));
+  }
+
+  function trackCount(id) {
+    const cells = state.grid[id];
+    return cells ? cells.size : 0;
+  }
+
   function showStoryHint(text) {
     const el = document.getElementById("remixHint");
     if (!el) return;
@@ -1754,7 +1765,7 @@
     const passed = Boolean(roundState.passed[roundState.section]);
     remixTitleEl.textContent = roundState.finished
       ? "四段已完成"
-      : "第 " + (roundState.section + 1) + " 段 / 共 " + total + " 段";
+      : (roundState.round === 2 ? "第二轮 · 第 " : "第 ") + (roundState.section + 1) + " 段 / 共 " + total + " 段";
     remixRangeEl.textContent = roundState.finished
       ? "闭环占位 · 后续段落待填"
       : "本段 " + (range.end - range.start) + " 步 · " + (passed ? "已完成" : "自由完成度");
@@ -1952,6 +1963,7 @@
     try {
       localStorage.setItem(ROUND_KEY, JSON.stringify({
         version: Number(cfg.version) || 1,
+        round: roundState.round,
         section: roundState.section,
         passed: roundState.passed,
         finished: roundState.finished,
@@ -2089,6 +2101,13 @@
     roundShowKkt(section && section.kkt);
     const kkt = (section && section.kkt) || {};
     storyNotify("kkt", { thread: kkt.thread || "star", text: kkt.preview || "" });
+    storyEvent("section-done", {
+      section: index + 1,
+      round: roundState.round,
+      bass: trackCount("bass"),
+      drums: trackCount("drums"),
+      melody: trackCount("melody")
+    });
     showStoryHint((section && section.onPass) || "");
 
     remixTitleEl.textContent = "第 " + (index + 1) + " 段完成";
@@ -2133,10 +2152,40 @@
     else roundFinish();
   }
 
-  /* 重新开始：清空进度与备注，回到第 1 段 */
+  /* 第二轮：保留已写好的音符，重新走四段判定 */
+  function storyStartRound2() {
+    if (roundState.playing) return;
+    roundState.round = 2;
+    roundState.finished = false;
+    roundState.passed = [false, false, false, false];
+    roundState.fails = 0;
+    roundEnter(0);
+    showToast("第二轮：在原来的基础上修改");
+  }
+
+  window.addEventListener("message", function (event) {
+    const d = event.data;
+    if (!d || d.source !== "phone-story") return;
+    if (d.type === "round2") {
+      storyStartRound2();
+    } else if (d.type === "query") {
+      storyNotify("query-result", {
+        id: d.id,
+        round: roundState.round,
+        finished: roundState.finished,
+        bass: trackCount("bass"),
+        drums: trackCount("drums"),
+        melody: trackCount("melody")
+      });
+    } else if (d.type === "toast" && d.text) {
+      showToast(d.text);
+    }
+  });
+
   function roundReset() {
     if (roundState.playing) return;
     if (!window.confirm("重新开始会清空编曲进度和备注，确定吗？")) return;
+    roundState.round = 1;
     roundState.passed = [false, false, false, false];
     roundState.finished = false;
     roundState.notes = [];
@@ -2171,6 +2220,12 @@
     renderTracks();
     roundQueueSave(true);
     showToast("四段占位闭环已跑通");
+    storyEvent("round-done", {
+      round: roundState.round,
+      bass: trackCount("bass"),
+      drums: trackCount("drums"),
+      melody: trackCount("melody")
+    });
   }
 
   function roundBoot() {
@@ -2180,6 +2235,7 @@
     const saved = roundReadSaved();
     if (saved) {
       roundApplyBase(saved);
+      roundState.round = Number(saved.round) === 2 ? 2 : 1;
       if (saved.grid) {
         setFromArray("melody", saved.grid.melody);
         setFromArray("bass", saved.grid.bass);
