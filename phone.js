@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const LOCK_CODE = "5300810";
+  const LOCK_CODE = "530111";
   const HOME_KEY = "dreamphone.notes.v1";
 
   const $ = function (selector, root) {
@@ -325,9 +325,6 @@
     unlockChime();
     if (window.Drama) updateStoryLayer();
     if (navigator.vibrate) navigator.vibrate(18);
-    setTimeout(function () {
-      showToast("欢迎回来，梦女 ♡");
-    }, 380);
   }
 
   function pressPassKey(key) {
@@ -569,7 +566,18 @@
   }
 
   /* ================= 适配屏幕 ================= */
+  function isPhoneLayout() {
+    return window.matchMedia("(max-width: 640px)").matches || window.innerHeight < 700;
+  }
+
   function fitDevice() {
+    const full = isPhoneLayout();
+    document.body.classList.toggle("full-screen", full);
+    if (full) {
+      deviceEl.style.transform = "none";
+      deviceEl.style.marginBottom = "0px";
+      return;
+    }
     const scale = Math.min(1, (window.innerWidth - 26) / 410, (window.innerHeight - 96) / 864);
     deviceEl.style.transform = "scale(" + scale + ")";
     deviceEl.style.marginBottom = 864 * (scale - 1) + "px";
@@ -1575,7 +1583,7 @@
       '<button class="set-btn danger" type="button" data-action="lock">锁定手机</button>' +
       '<button class="set-btn" type="button" data-action="about">关于本机</button>' +
       '<button class="set-btn danger" type="button" data-action="clear-notes">清空备忘录</button>' +
-      '<p class="set-foot">Dream Phone · 星音定制版<br />锁屏密码 5300810 · 解锁后才能使用</p>';
+      '<p class="set-foot">Dream Phone · 星音定制版<br />锁屏密码 530111 · 解锁后才能使用</p>';
   }
 
   /* ================= 电话 ================= */

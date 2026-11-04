@@ -3474,3 +3474,39 @@ button {
   position: relative;
   z-index: 1;
 }
+
+/* ============ 手机全屏模式（真实手机打开链接时只显示屏幕） ============ */
+body.full-screen {
+  display: block;
+  background: #000;
+}
+
+body.full-screen .stage {
+  display: block;
+  height: 100%;
+  padding: 0;
+}
+
+body.full-screen .device {
+  width: 100vw;
+  height: 100vh;
+  height: 100svh;
+  padding: 0;
+  border-radius: 0;
+  background: #000;
+  box-shadow: none;
+}
+
+body.full-screen .device::after,
+body.full-screen .side-btn,
+body.full-screen .device-caption {
+  display: none;
+}
+
+body.full-screen .screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
