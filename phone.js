@@ -1169,7 +1169,45 @@
       state.noteEditing = null;
       renderApp();
       showToast("备忘录已全部清空");
+      return;
     }
+
+    if (action === "restart-game") {
+      const now = Date.now();
+      if (now - restartArmed > 3500) {
+        restartArmed = now;
+        showToast("再点一次「重新开始游戏」确认清空剧情与编曲");
+        return;
+      }
+      restartArmed = 0;
+      restartGame();
+    }
+  }
+
+  /* ================= 重新开始 ================= */
+  let restartArmed = 0;
+
+  function restartGame() {
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key && (key.indexOf("xingyin.") === 0 || key.indexOf("dreamphone.") === 0)) keys.push(key);
+      }
+      keys.forEach(function (key) {
+        localStorage.removeItem(key);
+      });
+    } catch (err) {
+      /* 忽略 */
+    }
+    if (window.Drama) drama.reset();
+    state.chat = null;
+    state.noteEditing = null;
+    state.notes = [];
+    showToast("正在重新开始…");
+    setTimeout(function () {
+      location.reload();
+    }, 500);
   }
 
   /* ================= 备忘录存储 ================= */
@@ -1576,10 +1614,11 @@
       "</div>" +
       '<div class="set-group">' +
       '<div class="set-row"><span class="set-ic b2">🔒</span><span class="set-label">锁屏密码</span>' +
-      '<span class="set-value">7 位数字</span></div>' +
+      '<span class="set-value">6 位数字</span></div>' +
       '<div class="set-row"><span class="set-ic b4">✦</span><span class="set-label">面容 ID 与密码</span>' +
       '<span class="set-value">已开启 ›</span></div>' +
       "</div>" +
+      '<button class="set-btn danger" type="button" data-action="restart-game">重新开始游戏</button>' +
       '<button class="set-btn danger" type="button" data-action="lock">锁定手机</button>' +
       '<button class="set-btn" type="button" data-action="about">关于本机</button>' +
       '<button class="set-btn danger" type="button" data-action="clear-notes">清空备忘录</button>' +
