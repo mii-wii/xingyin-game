@@ -30,12 +30,10 @@ window.PHONE_SCRIPT = {
       { x: "你好啊！叫我{name}就好。我看过你们的演出，很不错呢，很开心你喜欢我的歌，有机会我们多多交流啊，我有很多想问你的呢。", j: "ts-reply-2" }
     ] },
     { id: "ts-reply-1", t: "m", th: "ts", w: "ts", x: "🤝" },
-    { t: "goto", to: "ts-emoji" },
+    { t: "goto", to: "wn-start" },
     { id: "ts-reply-2", t: "m", th: "ts", w: "ts", x: "真荣幸啊。" },
-    { id: "ts-emoji", t: "a", th: "ts", o: [
-      { x: "（不回复）", silent: true, j: "wn-start" },
-      { x: "", label: "可爱表情包", silent: false, j: "wn-start" }
-    ] },
+    { t: "m", th: "ts", w: "me", img: "assets/story/emoji-cute.jpg" },
+    { t: "goto", to: "wn-start" },
 
     /* ---------- 金云鹤来探口风 ---------- */
     { id: "wn-start", t: "m", th: "wn", w: "wn", x: "{name}姐！" },
@@ -48,15 +46,12 @@ window.PHONE_SCRIPT = {
     { id: "wn-a1", t: "flag", k: "wn1", v: true },
     { t: "m", th: "wn", w: "wn", x: "啊？真的？" },
     { t: "m", th: "wn", w: "wn", x: "又被耍了啊" },
-    { t: "goto", to: "wn-b" },
-    { id: "wn-a2", t: "m", th: "wn", w: "wn", x: "哈哈！我是不是很厉害，这都猜到了。" },
-    { id: "wn-b", t: "a", th: "wn", o: [
-      { x: "吴娜啊，你长点心吧", j: "wn-c1" },
-      { x: "对呀，真厉害，不愧是我们云鹤啊。", j: "wn-c2" }
-    ] },
-    { id: "wn-c1", t: "m", th: "wn", w: "wn", x: "ㅠㅠ" },
+    { t: "m", th: "wn", w: "me", x: "吴娜啊，你长点心吧" },
+    { t: "m", th: "wn", w: "wn", x: "ㅠㅠ" },
     { t: "goto", to: "story-1" },
-    { id: "wn-c2", t: "m", th: "wn", w: "wn", x: "哈哈" },
+    { id: "wn-a2", t: "m", th: "wn", w: "wn", x: "哈哈！我是不是很厉害，这都猜到了。" },
+    { t: "m", th: "wn", w: "me", x: "对呀，真厉害，不愧是我们云鹤啊。" },
+    { t: "m", th: "wn", w: "wn", x: "哈哈" },
 
     /* ---------- 第一轮编曲完成：发快拍 ---------- */
     { id: "story-1", t: "gate", name: "round1" },
