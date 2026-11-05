@@ -1993,6 +1993,11 @@
     }, 400);
   }
 
+  /* 退出/隐藏页面时立刻落盘，避免防抖窗口里的改动丢失 */
+  window.addEventListener("pagehide", function () {
+    if (roundState.active) roundQueueSave(true);
+  });
+
   function roundReadSaved() {
     const cfg = roundConfig();
     if (!cfg) return null;

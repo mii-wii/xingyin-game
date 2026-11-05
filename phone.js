@@ -2006,8 +2006,9 @@
   }
 
   /* 剧情任务卡 / 提示 */
-  let querySeq = 0;
-  const queryWaiters = {};
+  const ROUND_STORE_KEY = "xingyin.round.v1";
+  const WORK_STORE_KEY = "xingyin.work.v1";
+  const STORY_TOTAL_STEPS = 32;
 
   function postToMusic(message) {
     const frame = appLayer.querySelector(".music-frame");
@@ -2018,26 +2019,64 @@
     return false;
   }
 
-  function queryStats(cb, retry) {
-    if (!postToMusic({ source: "phone-story", type: "query", id: "probe" })) {
-      const frame = appLayer.querySelector(".music-frame");
-      if (!frame && !retry) {
-        openApp("music");
-        setTimeout(function () { queryStats(cb, true); }, 900);
-        return;
-      }
-      cb({ bass: 0, drums: 0 });
-      return;
+  /* 直接读本地存档里的鼓点数：不依赖 iframe 是否加载，也不受加载竞态影响 */
+  function storyRoundCfg() {
+    const cfg = window.STORY_CONTENT && window.STORY_CONTENT.round;
+    return cfg && Array.isArray(cfg.sections) && cfg.sections.length ? cfg : null;
+  }
+
+  function storySectionSpan(section) {
+    const cfg = storyRoundCfg();
+    const fallback = Math.max(1, Number(cfg && cfg.sectionSteps) || 8);
+    const steps = Number(section && section.steps);
+    return Math.max(1, Math.min(STORY_TOTAL_STEPS, Number.isFinite(steps) && steps > 0 ? steps : fallback));
+  }
+
+  /* 「第四段」= 最后一段；段范围算法和 app.js 的 roundSectionRange 保持一致 */
+  function storyFixRange() {
+    const cfg = storyRoundCfg();
+    const index = Math.max(0, (cfg ? cfg.sections.length : 4) - 1);
+    let start = 0;
+    for (let i = 0; i < index; i += 1) {
+      start += storySectionSpan(cfg ? cfg.sections[i] : null);
     }
-    const id = "q" + (querySeq += 1);
-    queryWaiters[id] = cb;
-    postToMusic({ source: "phone-story", type: "query", id: id });
-    setTimeout(function () {
-      if (queryWaiters[id]) {
-        delete queryWaiters[id];
-        cb({ bass: 0, drums: 0 });
+    if (start >= STORY_TOTAL_STEPS) return { start: STORY_TOTAL_STEPS - 1, end: STORY_TOTAL_STEPS };
+    const span = storySectionSpan(cfg ? cfg.sections[index] : null);
+    return { start: start, end: Math.min(STORY_TOTAL_STEPS, start + span) };
+  }
+
+  function readSavedDrums() {
+    const keys = [ROUND_STORE_KEY, WORK_STORE_KEY];
+    for (let i = 0; i < keys.length; i += 1) {
+      try {
+        const raw = localStorage.getItem(keys[i]);
+        const data = raw ? JSON.parse(raw) : null;
+        const grid = data && (data.grid || (data.work && data.work.grid));
+        if (grid && Array.isArray(grid.drums)) return grid.drums;
+      } catch (err) {
+        /* 换下一个存档 */
       }
-    }, 1200);
+    }
+    return null;
+  }
+
+  function storyDrumCount(range) {
+    const drums = readSavedDrums();
+    if (!drums || !range) return 0;
+    let count = 0;
+    drums.forEach(function (key) {
+      const step = Number(String(key).split("-")[1]);
+      if (step >= range.start && step < range.end) count += 1;
+    });
+    return count;
+  }
+
+  /* 任务出现时就锁基准，之后只比较「当前鼓点数 - 基准」 */
+  function storyLockFixBase(st) {
+    if (!st || !st.flags || st.flags.fixDrumBase !== undefined) return;
+    if (st.flags.fixBase !== undefined) delete st.flags.fixBase;
+    st.flags.fixDrumBase = storyDrumCount(storyFixRange());
+    drama.save();
   }
 
   function performStoryAction(id) {
@@ -2050,17 +2089,17 @@
       }, 800);
       showToast("在编曲器里完成第二轮，四段都要提交");
     } else if (id === "send-fix") {
-      queryStats(function (stats) {
-        if (st.flags.fixBase === undefined) st.flags.fixBase = stats.drums;
-        if (stats.drums <= st.flags.fixBase) {
-          showToast("先把第四段的鼓改密一点，再发给他");
-          return;
-        }
-        drama.action(id);
-        renderApp();
-        updateStoryLayer();
-        beep(1040, 0.06, "sine", 0.035);
-      });
+      storyLockFixBase(st);
+      const base = Number(st.flags.fixDrumBase) || 0;
+      const drums = storyDrumCount(storyFixRange());
+      if (drums <= base) {
+        showToast("先把第四段的鼓改密一点，再发给他");
+        return;
+      }
+      drama.action(id);
+      renderApp();
+      updateStoryLayer();
+      beep(1040, 0.06, "sine", 0.035);
       return;
     } else {
       drama.action(id);
@@ -2092,14 +2131,7 @@
     }
     const pend = st.pending;
     if (pend && pend.kind === "action" && screenEl.dataset.state === "unlocked") {
-      if (pend.id === "send-fix" && st.flags.fixBase === undefined) {
-        queryStats(function (stats) {
-          if (st.flags.fixBase === undefined) {
-            st.flags.fixBase = stats.drums;
-            drama.save();
-          }
-        });
-      }
+      if (pend.id === "send-fix") storyLockFixBase(st);
       storyLayer.innerHTML = '<div class="story-task">' +
         '<span class="story-task-text">' + escapeHTML(pend.hint) + "</span>" +
         '<button class="kkt-btn" type="button" data-story-act="' + pend.id + '">' +
@@ -2279,7 +2311,7 @@
     if (kind === "msg") {
       const appOpen = dramaThreadOpen(info.thread);
       if (appOpen && !dramaChatSync()) renderApp();
-      if (!appOpen && state.app === "wechat" && !state.chat) renderApp();
+      if (!appOpen && !state.chat && (state.app === "wechat" || state.app === "kakao")) renderApp();
       if (info.who !== "me" && !appOpen) {
         const appId = dramaThreadApp(info.thread);
         showBanner({
@@ -2304,6 +2336,8 @@
           text: info.text || "发来一条新消息"
         });
       }
+      /* 聊天列表页也要同步刷新，否则要等退出重进才看到新消息 */
+      if (!state.chat && (state.app === "kakao" || state.app === "wechat")) renderApp();
       updateStoryLayer();
       return;
     }
@@ -2356,14 +2390,6 @@
   function onLogicMessage(event) {
     const d = event.data;
     if (!d || d.source !== "logic-story") return;
-    if (d.type === "query-result") {
-      const cb = queryWaiters[d.id];
-      if (cb) {
-        delete queryWaiters[d.id];
-        cb({ bass: Number(d.bass) || 0, drums: Number(d.drums) || 0 });
-      }
-      return;
-    }
     if (d.type === "song-sent") {
       if (drama && drama.state.pending && drama.state.pending.id === "send-song") {
         drama.action("send-song");
