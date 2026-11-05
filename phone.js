@@ -1675,7 +1675,7 @@
       '<div class="music-nav">' +
       statusBarHTML() +
       '<div class="music-nav-row">' +
-      '<button class="nav-back" type="button" data-action="close" aria-label="返回">‹</button>' +
+      '<button class="nav-back nav-exit" type="button" data-action="close" aria-label="退出 Logic">‹ 退出</button>' +
       "<h1>Logic</h1>" +
       '<span class="music-chip">编曲 Studio</span>' +
       "</div>" +
@@ -2038,54 +2038,107 @@
   });
 
   /* ================= 来自编曲器（iframe）的故事消息 ================= */
-  const kktBanner = document.createElement("div");
-  kktBanner.className = "kkt-banner";
-  kktBanner.hidden = true;
-  screenEl.appendChild(kktBanner);
+  /* ================= 通知横幅（模仿 iOS 横幅） ================= */
+  const phoneBanner = document.createElement("div");
+  phoneBanner.className = "phone-banner";
+  phoneBanner.hidden = true;
+  screenEl.appendChild(phoneBanner);
 
-  function addKktMessage(threadKey, text) {
-    const thread = THREADS.kakao[threadKey];
-    if (!thread) return;
-    const t = text || "（新消息）";
-    thread.msgs.push({ from: "you", text: t });
-    thread.unread = (thread.unread || 0) + 1;
-    thread.time = localTime();
-    if (state.app === "kakao" && state.chat && state.chat.key === threadKey) {
+  const bannerQueue = [];
+  let bannerBusy = false;
+  let bannerTimer = 0;
+
+  function showBanner(item) {
+    if (!item) return;
+    bannerQueue.push(item);
+    if (!bannerBusy) nextBanner();
+  }
+
+  function nextBanner() {
+    const item = bannerQueue.shift();
+    if (!item) {
+      bannerBusy = false;
+      phoneBanner.hidden = true;
+      return;
+    }
+    bannerBusy = true;
+    const cast = item.who && drama && drama.cast[item.who];
+    const icon = item.app === "instagram"
+      ? '<span class="pb-icon icon-ig">' + ICONS.instagram + "</span>"
+      : '<span class="pb-icon icon-kakao">' + ICONS.kakao + "</span>";
+    phoneBanner.innerHTML = icon +
+      '<span class="pb-main"><b>' + (cast ? cast.name : item.title) + "</b>" +
+      '<span class="pb-app">' + item.title + "</span>" +
+      "<span class=\"pb-text\">" + escapeHTML(item.text || "") + "</span></span>" +
+      '<span class="pb-time">现在</span>';
+    phoneBanner.dataset.app = item.app || "";
+    phoneBanner.dataset.thread = item.thread || "";
+    phoneBanner.hidden = false;
+    window.clearTimeout(bannerTimer);
+    bannerTimer = window.setTimeout(function () {
+      phoneBanner.classList.add("is-out");
+      window.setTimeout(function () {
+        phoneBanner.classList.remove("is-out");
+        nextBanner();
+      }, 260);
+    }, 3600);
+  }
+
+  phoneBanner.addEventListener("click", function () {
+    const appId = phoneBanner.dataset.app;
+    const thread = phoneBanner.dataset.thread;
+    if (!appId) return;
+    bannerQueue.length = 0;
+    bannerBusy = false;
+    phoneBanner.hidden = true;
+    window.clearTimeout(bannerTimer);
+    openApp(appId);
+    if (appId === "kakao" && thread) {
+      state.chat = { app: "kakao", key: thread };
+      if (drama) drama.setOpen(thread);
       renderApp();
     }
-  }
-
-  function showKktBanner(threadKey) {
-    const thread = THREADS.kakao[threadKey];
-    if (!thread) return;
-    const last = thread.msgs[thread.msgs.length - 1];
-    kktBanner.innerHTML =
-      '<span class="kkt-av ' + (thread.tone || "") + '">' + (thread.avatar || "") + "</span>" +
-      '<span class="kkt-body"><b>' + thread.name + "</b><span>" + (last ? last.text : "") + "</span></span>" +
-      '<span class="kkt-go">打开</span>';
-    kktBanner.hidden = false;
-    kktBanner.dataset.thread = threadKey;
-    clearTimeout(kktBanner._t);
-    kktBanner._t = setTimeout(function () {
-      kktBanner.hidden = true;
-    }, 5000);
-  }
-
-  kktBanner.addEventListener("click", function () {
-    kktBanner.hidden = true;
-    openApp("kakao");
-    state.chat = { app: "kakao", key: kktBanner.dataset.thread };
-    renderApp();
   });
+
+  /* 剧情变化 → 更新界面 / 弹横幅 */
+  function onDramaChange(kind, info) {
+    if (kind === "msg") {
+      const appOpen = state.app === "kakao" && state.chat && state.chat.key === info.thread;
+      if (appOpen) renderApp();
+      if (info.who !== "me" && !appOpen) {
+        showBanner({ app: "kakao", thread: info.thread, who: info.thread, title: "KakaoTalk", text: info.text });
+      }
+      return;
+    }
+    if (kind === "post") {
+      if (state.app === "instagram") renderApp();
+      if (info.who !== "me") {
+        showBanner({
+          app: "instagram",
+          who: info.who,
+          title: "Instagram",
+          text: info.story ? "发布了新快拍：" + info.caption : info.caption
+        });
+      }
+      return;
+    }
+    if (kind === "request") {
+      showBanner({ app: "kakao", thread: "ts", who: info.from, title: "KakaoTalk", text: info.text });
+      updateStoryLayer();
+      return;
+    }
+    if (kind === "modal") {
+      updateStoryLayer();
+      return;
+    }
+    if (kind === "end") {
+      updateStoryLayer();
+    }
+  }
 
   function onLogicMessage(event) {
     const d = event.data;
     if (!d || d.source !== "logic-story") return;
-    if (d.type === "kkt") {
-      addKktMessage(d.thread || "star", d.text);
-      showKktBanner(d.thread || "star");
-      return;
-    }
     if (d.type === "query-result") {
       const cb = queryWaiters[d.id];
       if (cb) {
@@ -2094,8 +2147,16 @@
       }
       return;
     }
+    if (d.type === "song-sent") {
+      if (drama && drama.state.pending && drama.state.pending.id === "send-song") {
+        drama.action("send-song");
+        renderApp();
+        updateStoryLayer();
+      }
+      return;
+    }
     if (d.type === "story-event") {
-      if (d.event === "section-done" && Number(d.section) >= 1) {
+      if (d.event === "section-done" && Number(d.section) === 1 && Number(d.round || 1) === 1) {
         drama.event("section1", { bass: d.bass, drums: d.drums });
       }
       if (d.event === "round-done") {
@@ -2105,17 +2166,15 @@
           melody: d.melody
         });
       }
-      renderApp();
+      if (state.app !== "music") renderApp();
       updateStoryLayer();
-      if (drama.state.pending && drama.state.pending.thread) {
-        showKktBanner(drama.state.pending.thread);
-      }
     }
   }
 
   window.addEventListener("message", onLogicMessage);
 
   if (window.Drama) {
+    drama.onChange(onDramaChange);
     drama.step();
     updateStoryLayer();
   }

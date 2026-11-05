@@ -73,6 +73,27 @@
     }
   }
 
+  let stepTimer = 0;
+  const watchers = [];
+
+  function emit(kind, info) {
+    for (let i = 0; i < watchers.length; i += 1) {
+      try {
+        watchers[i](kind, info || {});
+      } catch (err) {
+        /* 忽略回调异常 */
+      }
+    }
+  }
+
+  function queueTick(delay) {
+    window.clearTimeout(stepTimer);
+    stepTimer = window.setTimeout(function () {
+      stepTimer = 0;
+      step();
+    }, delay || 550);
+  }
+
   function addMsg(key, who, body, img) {
     const list = state.threads[key];
     if (!Array.isArray(list)) return;
@@ -80,6 +101,8 @@
     if (who !== "me" && state.open !== key) {
       state.unread[key] = (state.unread[key] || 0) + 1;
     }
+    const last = list[list.length - 1];
+    emit("msg", { thread: key, who: last.from, text: last.text, img: last.img });
   }
 
   function addPost(node) {
@@ -98,6 +121,12 @@
       mine: who === "me"
     };
     state.feed.unshift(post);
+    emit("post", {
+      who: who,
+      caption: post.caption,
+      story: post.story,
+      announce: post.announce
+    });
   }
 
   function lastPost() {
@@ -132,6 +161,8 @@
   }
 
   function step() {
+    window.clearTimeout(stepTimer);
+    stepTimer = 0;
     const list = flow();
     let guard = 0;
     while (!state.done && !state.pending && guard < 4000) {
@@ -167,12 +198,16 @@
           const key = node.th || (node.w === "me" ? state.open : node.w);
           addMsg(key, node.w, node.x, node.img);
           state.pc += 1;
-          break;
+          save();
+          queueTick(560);
+          return;
         }
         case "post":
           addPost(node);
           state.pc += 1;
-          break;
+          save();
+          queueTick(node.w === "me" ? 700 : 1700);
+          return;
         case "like":
           addLike(node);
           state.pc += 1;
@@ -191,10 +226,12 @@
           break;
         case "modal":
           state.modal = text(node.x);
+          emit("modal", { text: state.modal });
           state.pc += 1;
           break;
         case "req":
           state.request = { from: node.w, text: text(node.x) };
+          emit("request", { from: node.w, text: state.request.text });
           state.pc += 1;
           break;
         case "goto":
@@ -231,6 +268,7 @@
         }
         case "end":
           state.done = true;
+          emit("end", {});
           break;
         default:
           state.pc += 1;
@@ -302,6 +340,8 @@
   }
 
   function reset() {
+    window.clearTimeout(stepTimer);
+    stepTimer = 0;
     try {
       localStorage.removeItem(SAVE_KEY);
     } catch (err) {
@@ -335,7 +375,10 @@
     setOpen: setOpen,
     setName: setName,
     reset: reset,
-    text: text
+    text: text,
+    onChange: function (fn) {
+      if (typeof fn === "function") watchers.push(fn);
+    }
   };
 
   load();

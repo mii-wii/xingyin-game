@@ -1447,6 +1447,17 @@ button:active {
   color: #150c27;
 }
 
+.remix-send {
+  flex: 0 0 auto;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #ffdf7a, #ff9f4a);
+  font-size: 10px;
+  font-weight: 800;
+  color: #2a1a05;
+}
+
 .remix-exit {
   flex: 0 0 auto;
   width: 26px;

@@ -158,11 +158,17 @@
     }, duration || 2600);
   }
 
-  /* iOS 静音模式会静音合成音，首次进入时提示一次 */
+  /* iOS 静音模式会静音合成音，整个游戏只提示一次 */
   function hintIosSilentMode() {
     const ua = navigator.userAgent;
     const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     if (!isIos) return;
+    try {
+      if (window.sessionStorage.getItem("xingyin.silentHint")) return;
+      window.sessionStorage.setItem("xingyin.silentHint", "1");
+    } catch (err) {
+      /* 忽略 */
+    }
     setTimeout(function () {
       showToast("没声音？请关闭 iOS 静音模式（控制中心铃铛）", 5000);
     }, 1500);
@@ -1753,6 +1759,10 @@
     return remixBarEl.querySelector(".remix-check");
   }
 
+  function roundBarSend() {
+    return remixBarEl.querySelector(".remix-send");
+  }
+
   function roundBarSkip() {
     return remixBarEl.querySelector(".remix-skip");
   }
@@ -1773,7 +1783,11 @@
     if (check) {
       check.hidden = roundState.finished;
       check.disabled = passed || roundState.finished;
-      check.textContent = passed ? "已完成" : "交给他听";
+      check.textContent = passed ? "已完成" : "完成";
+    }
+    const send = roundBarSend();
+    if (send) {
+      send.hidden = !(roundState.finished && roundState.round === 2);
     }
     const skip = roundBarSkip();
     if (skip) {
@@ -2101,13 +2115,6 @@
     roundShowKkt(section && section.kkt);
     const kkt = (section && section.kkt) || {};
     storyNotify("kkt", { thread: kkt.thread || "star", text: kkt.preview || "" });
-    storyEvent("section-done", {
-      section: index + 1,
-      round: roundState.round,
-      bass: trackCount("bass"),
-      drums: trackCount("drums"),
-      melody: trackCount("melody")
-    });
     showStoryHint((section && section.onPass) || "");
 
     remixTitleEl.textContent = "第 " + (index + 1) + " 段完成";
@@ -2140,7 +2147,23 @@
       return;
     }
     showStoryHint("");
+    storyEvent("section-done", {
+      section: roundState.section + 1,
+      round: roundState.round,
+      bass: trackCount("bass"),
+      drums: trackCount("drums"),
+      melody: trackCount("melody")
+    });
     roundPlaySection(roundPass);
+  }
+
+  function roundSendToHim() {
+    if (!roundState.finished || roundState.round !== 2) {
+      showToast("第二轮全部完成后再发给他");
+      return;
+    }
+    storyNotify("song-sent", { round: roundState.round });
+    showToast("已发给韩泰山");
   }
 
   function roundSkip() {
@@ -2819,6 +2842,7 @@
         if (name === "check") roundSubmit();
         else if (name === "skip") roundSkip();
         else if (name === "reset") roundReset();
+        else if (name === "send") roundSendToHim();
         return;
       }
       if (name === "save") {
