@@ -2053,7 +2053,7 @@
       queryStats(function (stats) {
         if (st.flags.fixBase === undefined) st.flags.fixBase = stats.drums;
         if (stats.drums <= st.flags.fixBase) {
-          showToast("先把第二段的鼓改密一点，再发给他");
+          showToast("先把第四段的鼓改密一点，再发给他");
           return;
         }
         drama.action(id);
