@@ -48,10 +48,11 @@ window.PHONE_SCRIPT = {
     { t: "m", th: "wn", w: "wn", x: "又被耍了啊" },
     { t: "m", th: "wn", w: "me", x: "吴娜啊，你长点心吧" },
     { t: "m", th: "wn", w: "wn", x: "ㅠㅠ" },
-    { t: "goto", to: "story-1" },
+    { t: "goto", to: "to-logic" },
     { id: "wn-a2", t: "m", th: "wn", w: "wn", x: "哈哈！我是不是很厉害，这都猜到了。" },
     { t: "m", th: "wn", w: "me", x: "对呀，真厉害，不愧是我们云鹤啊。" },
     { t: "m", th: "wn", w: "wn", x: "哈哈" },
+    { id: "to-logic", t: "modal", x: "和云鹤聊完啦。去编曲软件把第一首歌编完吧——完成第一段后，我们再回来继续。" },
 
     /* ---------- 第一轮编曲完成：发快拍 ---------- */
     { id: "story-1", t: "gate", name: "round1" },

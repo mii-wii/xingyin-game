@@ -490,7 +490,7 @@
     if (state.chat && app.id === state.chat.app) {
       const thread = THREADS[app.id] && THREADS[app.id][state.chat.key];
       if (thread) title = thread.name;
-      if (inKakaoChat) {
+      if (inKakaoChat || (app.id === "wechat" && state.chat.key === "ys")) {
         const castKey = state.chat.key;
         title = (drama && drama.cast[castKey]) ? drama.cast[castKey].name : title;
       }
@@ -652,7 +652,8 @@
     const chatRow = event.target.closest("[data-chat]");
     if (chatRow) {
       state.chat = { app: state.app, key: chatRow.dataset.chat };
-      if (state.app === "kakao" && window.Drama) {
+      if (window.Drama &&
+        (state.app === "kakao" || (state.app === "wechat" && chatRow.dataset.chat === "ys"))) {
         drama.setOpen(chatRow.dataset.chat);
       }
       renderApp();
@@ -977,10 +978,29 @@
     }
   };
 
+  function wechatDramaRow() {
+    if (!window.Drama) return "";
+    const st = drama.state;
+    const list = st.threads.ys || [];
+    if (!list.length) return "";
+    const last = list[list.length - 1];
+    const unread = st.unread.ys || 0;
+    const name = (drama.cast.ys && drama.cast.ys.name) || "允书";
+    return '<button class="list-row" type="button" data-chat="ys">' +
+      '<span class="avatar avatar-img"><img src="assets/story/ys-avatar.jpg" alt="' + name + '" onerror="this.parentNode.classList.add(\'avatar-text\');this.remove()"></span>' +
+      '<span class="row-main">' +
+      '<span class="row-title">' + name + (unread ? ' <span class="badge">' + unread + "</span>" : "") + "</span>" +
+      '<span class="row-sub">' + escapeHTML(last.text || "[图片]") + "</span>" +
+      "</span>" +
+      '<span class="row-meta">' + localTime() + "</span>" +
+      "</button>";
+  }
+
   function chatListHTML(app) {
     if (app.id === "kakao" && window.Drama) return dramaChatList();
     const threads = THREADS[app.id] || {};
     let html = '<div class="chat-list">';
+    if (app.id === "wechat") html += wechatDramaRow();
     Object.keys(threads).forEach(function (key) {
       const thread = threads[key];
       const last = thread.msgs[thread.msgs.length - 1];
@@ -1005,6 +1025,9 @@
     if (!state.chat || state.chat.app !== app.id) {
       return chatListHTML(app);
     }
+    if (app.id === "wechat" && state.chat.key === "ys" && window.Drama) {
+      return wechatDramaBody();
+    }
 
     const thread = THREADS[app.id] && THREADS[app.id][state.chat.key];
     if (!thread) return chatListHTML(app);
@@ -1028,12 +1051,16 @@
     const text = input.value.trim();
     if (!text) return;
 
-    if (state.chat.app === "kakao" && window.Drama) {
+    const isDramaChat = window.Drama &&
+      ((state.chat.app === "kakao") ||
+        (state.chat.app === "wechat" && state.chat.key === "ys"));
+
+    if (isDramaChat) {
       const list = window.Drama.state.threads[state.chat.key];
       if (!list) return;
       list.push({ from: "me", text: text, img: "" });
       window.Drama.save();
-      if (!syncKktChat()) renderApp();
+      if (!(state.chat.app === "kakao" ? syncKktChat() : syncWxChat())) renderApp();
       input.value = "";
       beep(1040, 0.06, "sine", 0.035);
       return;
@@ -1724,7 +1751,7 @@
         '<span class="row-sub">好友申请 · ' + escapeHTML(st.request.text) + "</span>" +
         "</span><span class=\"row-meta\">现在</span></button>";
     }
-    ["ts", "wn", "ys"].forEach(function (key) {
+    ["ts", "wn"].forEach(function (key) {
       const list = st.threads[key] || [];
       if (!list.length) return;
       const last = list[list.length - 1];
@@ -1791,6 +1818,53 @@
         escapeHTML(opt.label) + "</button>";
     });
     return html + "</div>";
+  }
+
+  /* ====== 允书的聊天放在微信里 ====== */
+  function wxMsgHTML(m) {
+    const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
+    return '<div class="msg ' + (m.from === "me" ? "me" : "you") + '">' + escapeHTML(m.text) + img + "</div>";
+  }
+
+  function wechatDramaBody() {
+    const list = drama.state.threads.ys || [];
+    let html = '<div class="chat-screen wx-screen" data-shown="' + list.length + '"><span class="chat-day">今天</span>';
+    list.forEach(function (m) {
+      html += wxMsgHTML(m);
+    });
+    html += kktChoicesHTML(drama.state.pending, "ys");
+    html += "</div>" +
+      '<div class="chat-input-row">' +
+      '<input class="chat-input" id="chatInput" type="text" placeholder="发消息…" autocomplete="off" />' +
+      '<button class="chat-send" type="button" data-action="send-chat">发送</button>' +
+      "</div>";
+    return html;
+  }
+
+  /* 增量刷新微信里的允书聊天 */
+  function syncWxChat() {
+    const screen = appLayer.querySelector(".wx-screen");
+    if (!screen || !state.chat || state.chat.key !== "ys") return false;
+    const st = drama.state;
+    const list = st.threads.ys || [];
+    const shown = Number(screen.dataset.shown || 0);
+    const oldChoices = screen.querySelector(".kkt-choices");
+    if (oldChoices) oldChoices.remove();
+    let added = 0;
+    if (list.length > shown) {
+      let html = "";
+      for (let i = shown; i < list.length; i += 1) html += wxMsgHTML(list[i]);
+      screen.insertAdjacentHTML("beforeend", html);
+      screen.dataset.shown = String(list.length);
+      added = list.length - shown;
+    }
+    const choices = kktChoicesHTML(st.pending, "ys");
+    if (choices) screen.insertAdjacentHTML("beforeend", choices);
+    if (added) {
+      const body = appLayer.querySelector(".app-body");
+      if (body) body.scrollTop = body.scrollHeight;
+    }
+    return true;
   }
 
   /* 增量刷新聊天：只追加新消息，不整页重绘（避免闪屏） */
@@ -2099,7 +2173,9 @@
     const cast = item.who && drama && drama.cast[item.who];
     const icon = item.app === "instagram"
       ? '<span class="pb-icon icon-ig">' + ICONS.instagram + "</span>"
-      : '<span class="pb-icon icon-kakao">' + ICONS.kakao + "</span>";
+      : item.app === "wechat"
+        ? '<span class="pb-icon icon-wechat">' + ICONS.wechat + "</span>"
+        : '<span class="pb-icon icon-kakao">' + ICONS.kakao + "</span>";
     phoneBanner.innerHTML = icon +
       '<span class="pb-main"><b>' + (cast ? cast.name : item.title) + "</b>" +
       '<span class="pb-app">' + item.title + "</span>" +
@@ -2127,31 +2203,55 @@
     phoneBanner.hidden = true;
     window.clearTimeout(bannerTimer);
     openApp(appId);
-    if (appId === "kakao" && thread) {
-      state.chat = { app: "kakao", key: thread };
+    if (thread && (appId === "kakao" || (appId === "wechat" && thread === "ys"))) {
+      state.chat = { app: appId, key: thread };
       if (drama) drama.setOpen(thread);
       renderApp();
     }
   });
 
+  /* 允书在微信，其余人在 Kakao */
+  function dramaThreadApp(thread) {
+    return thread === "ys" ? "wechat" : "kakao";
+  }
+
+  function dramaThreadOpen(thread) {
+    return Boolean(state.chat && state.chat.key === thread && state.chat.app === dramaThreadApp(thread));
+  }
+
+  function dramaChatSync() {
+    if (state.app === "kakao") return syncKktChat();
+    if (state.app === "wechat") return syncWxChat();
+    return false;
+  }
+
   /* 剧情变化 → 更新界面 / 弹横幅 */
   function onDramaChange(kind, info) {
     if (kind === "msg") {
-      const appOpen = state.app === "kakao" && state.chat && state.chat.key === info.thread;
-      if (appOpen && !syncKktChat()) renderApp();
+      const appOpen = dramaThreadOpen(info.thread);
+      if (appOpen && !dramaChatSync()) renderApp();
+      if (!appOpen && state.app === "wechat" && !state.chat) renderApp();
       if (info.who !== "me" && !appOpen) {
-        showBanner({ app: "kakao", thread: info.thread, who: info.thread, title: "KakaoTalk", text: info.text });
+        const appId = dramaThreadApp(info.thread);
+        showBanner({
+          app: appId,
+          thread: info.thread,
+          who: info.thread,
+          title: appId === "wechat" ? "微信" : "KakaoTalk",
+          text: info.text
+        });
       }
       return;
     }
     if (kind === "wait-open") {
-      const chatOpen = state.app === "kakao" && state.chat && state.chat.key === info.thread;
+      const chatOpen = dramaThreadOpen(info.thread);
       if (!chatOpen) {
+        const appId = dramaThreadApp(info.thread);
         showBanner({
-          app: "kakao",
+          app: appId,
           thread: info.thread,
           who: info.thread,
-          title: "KakaoTalk",
+          title: appId === "wechat" ? "微信" : "KakaoTalk",
           text: info.text || "发来一条新消息"
         });
       }
@@ -2171,7 +2271,7 @@
       return;
     }
     if (kind === "ask" || kind === "act" || kind === "modal" || kind === "end") {
-      if (state.app === "kakao" && !syncKktChat()) renderApp();
+      if ((state.app === "kakao" || state.app === "wechat") && !dramaChatSync()) renderApp();
       updateStoryLayer();
       return;
     }
