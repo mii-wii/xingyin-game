@@ -19,6 +19,7 @@
   const state = {
     name: "",
     pc: 0,
+    pcKey: "",
     flags: {},
     threads: { ts: [], wn: [], ys: [] },
     notes: [],
@@ -48,7 +49,37 @@
     return String(value == null ? "" : value).replace(/\{name\}/g, state.name || "你");
   }
 
+  /* 用节点内容指纹记录存档位置：剧本改动导致下标偏移时也能找回原处 */
+  function nodeKey(node) {
+    if (!node) return "";
+    return [node.id || "", node.t || "", node.th || "", node.w || "",
+      node.x || node.cap || "", node.name || "", node.label || ""].join("§");
+  }
+
+  function realignPc() {
+    const list = flow();
+    if (!state.pcKey) return;
+    if (nodeKey(list[state.pc]) === state.pcKey) return;
+    for (let i = 0; i < list.length; i += 1) {
+      if (nodeKey(list[i]) === state.pcKey) {
+        state.pc = i;
+        return;
+      }
+    }
+    const id = state.pcKey.split("§")[0];
+    if (id) {
+      for (let i = 0; i < list.length; i += 1) {
+        if (list[i].id === id) {
+          state.pc = i;
+          return;
+        }
+      }
+    }
+    if (state.pc > list.length) state.pc = list.length;
+  }
+
   function save() {
+    state.pcKey = nodeKey(flow()[state.pc]);
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     } catch (err) {
@@ -67,6 +98,7 @@
       });
       if (!state.threads) state.threads = { ts: [], wn: [], ys: [] };
       if (!state.unread) state.unread = { ts: 0, wn: 0, ys: 0 };
+      realignPc();
       return true;
     } catch (err) {
       return false;
