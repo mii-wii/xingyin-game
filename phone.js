@@ -1947,7 +1947,8 @@
       return '<div class="post-media post-rain"><span>雨</span></div>';
     }
     if (post.announce) {
-      return '<div class="post-media post-announce"><span>LIVE</span><b>u livehouse</b><i>ep000 · 专场演出</i></div>';
+      const who = (drama && drama.state && drama.state.name) || "我";
+      return '<div class="post-media post-announce"><span>LIVE</span><b>u livehouse</b><i>ep000 × ' + escapeHTML(who) + ' × %1 × RERE</i></div>';
     }
     return "";
   }

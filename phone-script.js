@@ -61,7 +61,7 @@ window.PHONE_SCRIPT = {
     { t: "like", w: "ts" },
     { t: "c", w: "wn", x: "是新歌吗？我好想听啊" },
     { t: "n", x: "新歌雏形已出，再定时间打磨。" },
-    { t: "post", w: "u", cap: "本周六 20:00 · u livehouse · ep000 乐队专场", place: "u livehouse", announce: true },
+    { t: "post", w: "u", cap: "本周六 20:00 · u livehouse · 阵容：ep000 / {name} / %1 / RERE", place: "u livehouse", announce: true },
     { t: "post", w: "ts", img: "assets/story/bass-outfit.jpg", cap: "今晚的贝斯有点重。#ep000", place: "练习室" },
     { t: "post", w: "wn", img: "assets/story/fries.jpg", cap: "刚刚炸出来的好好吃！推荐演出后吃！", place: "街角炸物店" },
 
