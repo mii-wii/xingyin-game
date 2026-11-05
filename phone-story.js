@@ -7,7 +7,7 @@
   const SAVE_KEY = "dreamphone.story.v1";
 
   const CAST = {
-    ts: { name: "韩泰山", avatar: "assets/story/ts-avatar.jpg", letter: "泰", tone: "av-ts" },
+    ts: { name: "GIANT MOUNTAIN", avatar: "assets/story/ts-avatar.jpg", letter: "G", tone: "av-ts" },
     wn: { name: "金云鹤", avatar: "assets/story/wn-avatar.jpg", letter: "鹤", tone: "av-wn" },
     ys: { name: "允书", avatar: "assets/story/ys-avatar.jpg", letter: "允", tone: "av-ys" },
     myng: { name: "myng", avatar: "assets/story/myng-avatar.jpg", letter: "m", tone: "av-myng" },
@@ -94,15 +94,16 @@
     }, delay || 550);
   }
 
-  function addMsg(key, who, body, img) {
+  function addMsg(key, who, body, img, quote) {
     const list = state.threads[key];
     if (!Array.isArray(list)) return;
-    list.push({ from: who === "me" ? "me" : "you", text: text(body), img: img || "" });
+    const item = { from: who === "me" ? "me" : "you", text: text(body), img: img || "" };
+    if (quote) item.quote = text(quote);
+    list.push(item);
     if (who !== "me" && state.open !== key) {
       state.unread[key] = (state.unread[key] || 0) + 1;
     }
-    const last = list[list.length - 1];
-    emit("msg", { thread: key, who: last.from, text: last.text, img: last.img });
+    emit("msg", { thread: key, who: item.from, text: item.text, img: item.img, quote: item.quote || "" });
   }
 
   function addPost(node) {
@@ -206,7 +207,7 @@
             save();
             return;
           }
-          addMsg(key, node.w, node.x, node.img);
+          addMsg(key, node.w, node.x, node.img, node.q);
           state.pc += 1;
           save();
           queueTick(node.w === "me" ? 800 : 1100);

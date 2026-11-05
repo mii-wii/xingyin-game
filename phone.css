@@ -3153,6 +3153,21 @@ button {
   font-weight: 500;
 }
 
+/* 引用回复：气泡里嵌一条被引用的原消息 */
+.kkt-quote {
+  margin-bottom: 6px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border-left: 2px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.06);
+  color: #666;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .kkt-photo {
   display: block;
   width: 150px;

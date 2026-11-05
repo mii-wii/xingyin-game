@@ -1748,7 +1748,7 @@
       rows += '<button class="list-row" type="button" data-chat="ts">' +
         dramaAvatar("ts") +
         '<span class="row-main">' +
-        '<span class="row-title">韩泰山 <span class="badge">1</span></span>' +
+        '<span class="row-title">' + escapeHTML(drama.cast.ts.name) + ' <span class="badge">1</span></span>' +
         '<span class="row-sub">好友申请 · ' + escapeHTML(st.request.text) + "</span>" +
         "</span><span class=\"row-meta\">现在</span></button>";
     }
@@ -1803,12 +1803,13 @@
 
   function kktMsgHTML(m, key, cast) {
     const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
+    const quote = m.quote ? '<div class="kkt-quote">' + escapeHTML(m.quote) + "</div>" : "";
     if (m.from === "me") {
-      return '<div class="kkt-row me"><div class="kkt-bubble me">' + escapeHTML(m.text) + img + "</div></div>";
+      return '<div class="kkt-row me"><div class="kkt-bubble me">' + quote + escapeHTML(m.text) + img + "</div></div>";
     }
     return '<div class="kkt-row you">' + dramaAvatar(key, "kkt-avatar") +
       '<div class="kkt-stack"><span class="kkt-name">' + escapeHTML(cast.name) + "</span>" +
-      '<div class="kkt-bubble">' + escapeHTML(m.text) + img + "</div></div></div>";
+      '<div class="kkt-bubble">' + quote + escapeHTML(m.text) + img + "</div></div></div>";
   }
 
   function kktChoicesHTML(pend, key) {

@@ -93,7 +93,7 @@ window.PHONE_SCRIPT = {
     { id: "after-oasis", t: "m", th: "ts", w: "me", x: "真好啊，我还以为你们乐队都是 hiphop 迷或者只听流行" },
     { t: "m", th: "ts", w: "me", x: "以后我们可以多聊聊~" },
     { t: "m", th: "ts", w: "me", x: "感觉音乐上我们应该会有很多话可以聊 嘿嘿" },
-    { t: "m", th: "ts", w: "ts", x: "因为吴娜？" },
+    { t: "m", th: "ts", w: "ts", x: "因为吴娜？", q: "真好啊，我还以为你们乐队都是 hiphop 迷或者只听流行" },
     { t: "m", th: "ts", w: "ts", x: "我和他不一样" },
     { t: "m", th: "ts", w: "me", x: "是夸奖吗...?" },
     { t: "m", th: "ts", w: "ts", x: "^^" },
