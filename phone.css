@@ -2412,6 +2412,125 @@ button {
   font-size: 18px;
 }
 
+/* ============ Safari 起始页（真实 Safari 风格） ============ */
+.safari-start {
+  padding: 4px 2px 10px;
+}
+
+.safari-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 2px 18px;
+}
+
+.safari-aa,
+.safari-reload {
+  font-size: 15px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.safari-field {
+  flex: 1;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.safari-field .ui-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.safari-section-title {
+  margin: 16px 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.safari-favs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 10px;
+  padding: 0 2px;
+}
+
+.safari-fav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.safari-fav i {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  font-style: normal;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.safari-card {
+  margin: 0 2px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* ============ 锁定应用占位 ============ */
+.app-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 340px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.app-locked-icon {
+  font-size: 40px;
+  opacity: 0.85;
+}
+
+.app-locked h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.app-locked p {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffd60a;
+}
+
+.app-locked span {
+  font-size: 12px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 /* ============ Logic ============ */
 .music-app {
   padding: 0;

@@ -868,43 +868,17 @@
   /* ================= 聊天 ================= */
   const THREADS = {
     wechat: {
-      lulu: {
-        name: "小鹿",
-        avatar: "鹿",
-        tone: "av-1",
-        time: "20:41",
-        unread: 1,
+      mom: {
+        name: "妈妈",
+        avatar: "妈",
+        tone: "av-4",
+        time: "20:20",
         msgs: [
-          { from: "you", text: "今晚在干嘛呀？" },
-          { from: "me", text: "在Logic里编一段旋律，已经循环十遍了。" },
-          { from: "you", text: "发我听听！" },
-          { from: "me", text: "等我把小提琴那轨加上就发你 ♪" }
+          { from: "you", text: "吃饭了吗？" },
+          { from: "me", text: "吃过啦，正在做音乐。" },
+          { from: "you", text: "早点睡，别太晚。" }
         ],
-        reply: "好呀，我等你！"
-      },
-      studio: {
-        name: "Logic群",
-        avatar: "音",
-        tone: "av-5",
-        time: "19:58",
-        unread: 3,
-        msgs: [
-          { from: "you", text: "新加的唢呐音色太顶了哈哈哈" },
-          { from: "you", text: "谁用二胡写一段？" },
-          { from: "me", text: "我来，正在试中提琴 + 二胡的组合。" }
-        ],
-        reply: "期待！"
-      },
-      momo: {
-        name: "桃桃",
-        avatar: "桃",
-        tone: "av-2",
-        time: "18:22",
-        msgs: [
-          { from: "you", text: "今天的晚霞好像你的壁纸" },
-          { from: "me", text: "我也觉得，暖暖的。" }
-        ],
-        reply: "那你早点休息呀～"
+        reply: "知道啦 ♡"
       },
       mover: {
         name: "微信运动",
@@ -945,18 +919,6 @@
       }
     },
     messages: {
-      mom: {
-        name: "妈妈",
-        avatar: "妈",
-        tone: "av-4",
-        time: "20:20",
-        msgs: [
-          { from: "you", text: "吃饭了吗？" },
-          { from: "me", text: "吃过啦，正在做音乐。" },
-          { from: "you", text: "早点睡，别太晚。" }
-        ],
-        reply: "知道啦 ♡"
-      },
       courier: {
         name: "快递小哥",
         avatar: "快",
@@ -1245,15 +1207,16 @@
     try {
       const raw = localStorage.getItem(HOME_KEY);
       const parsed = raw ? JSON.parse(raw) : null;
-      if (Array.isArray(parsed) && parsed.length) return parsed;
+      if (Array.isArray(parsed) && parsed.length) {
+        /* 清掉历史默认示例备忘，保留玩家自己写的 */
+        return parsed.filter(function (note) {
+          return ["晚安旋律", "明日待办", "灵感碎片"].indexOf(note && note.title) < 0;
+        });
+      }
     } catch (err) {
       /* 忽略存储错误 */
     }
-    return [
-      { title: "晚安旋律", body: "C 大调，92 BPM。\n钢琴 + 铃音，低音用低音提琴。\n副歌把二胡的颤音藏进去。", date: "2026-10-30" },
-      { title: "明日待办", body: "1. 导出 MIDI 发给桃桃\n2. 试听唢呐音色\n3. 早点睡，不许熬夜", date: "2026-10-29" },
-      { title: "灵感碎片", body: "把晚风写成八小节。\n第一小节只留呼吸。", date: "2026-10-28" }
-    ];
+    return [];
   }
 
   function persistNotes() {
@@ -1403,35 +1366,12 @@
   ];
 
   function xBodyHTML() {
-    const profile = '<div class="x-profile">' +
-      '<div class="x-profile-top">' +
-      '<span class="x-avatar avatar-img"><img src="' + X_AVATAR + '" alt="' + X_NAME + '"></span>' +
-      "<div>" +
-      '<div class="x-profile-name">' + X_NAME + "</div>" +
-      '<div class="x-profile-handle">@TS · GIANT MOUNTAIN</div>' +
-      "</div></div>" +
-      '<p class="x-profile-bio">唱歌 · 写歌 · 偶尔健身 ｜ 서울 ↔ 上海 ｜ DM open</p>' +
-      '<div class="x-profile-meta">1,284 正在关注 · 3.2 万 关注者</div>' +
+    return '<div class="app-locked">' +
+      '<div class="app-locked-icon">🔒</div>' +
+      "<h2>X</h2>" +
+      "<p>当前无法解锁</p>" +
+      "<span>该账号暂时无法访问，请稍后再试</span>" +
       "</div>";
-
-    const posts = X_POSTS.map(function (post) {
-      return '<article class="x-post">' +
-        '<span class="x-avatar avatar-img"><img src="' + X_AVATAR + '" alt="' + X_NAME + '"></span>' +
-        '<div class="x-main">' +
-        '<div class="x-head"><b>' + X_NAME + "</b><span>@TS · " + post.time + "</span></div>" +
-        '<p class="x-text">' + post.text + "</p>" +
-        '<div class="x-media"><img src="' + post.img + '" alt=""></div>' +
-        '<div class="x-actions">' +
-        '<button class="like" type="button" data-like data-count="' + post.likes + '">' +
-        '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-heart"></use></svg><span>' + post.likes + "</span></button>" +
-        '<button type="button" data-action="safari-topic" data-tip="回复功能在准备中">' +
-        '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-comment"></use></svg><span>' + post.replies + "</span></button>" +
-        '<button type="button" data-action="safari-topic" data-tip="链接已复制">' +
-        '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-share"></use></svg></button>' +
-        "</div></div></article>";
-    }).join("");
-
-    return profile + posts;
   }
 
   /* ================= 微博 ================= */
@@ -1531,26 +1471,26 @@
   /* ================= 天气 ================= */
   function weatherBodyHTML() {
     const hours = [
-      ["现在", "18°", "晴"],
-      ["21时", "17°", "晴"],
-      ["22时", "16°", "多云"],
-      ["23时", "16°", "多云"],
-      ["00时", "15°", "阴"],
-      ["01时", "15°", "阴"]
+      ["现在", "12°", "多云"],
+      ["21时", "11°", "多云"],
+      ["22时", "10°", "阴"],
+      ["23时", "9°", "阴"],
+      ["00时", "9°", "晴"],
+      ["01时", "8°", "晴"]
     ];
     const days = [
-      ["今天", "18°", "11°"],
-      ["明天", "19°", "12°"],
-      ["周六", "21°", "13°"],
-      ["周日", "20°", "14°"],
-      ["周一", "17°", "10°"]
+      ["今天", "13°", "6°"],
+      ["明天", "14°", "7°"],
+      ["周六", "15°", "8°"],
+      ["周日", "13°", "5°"],
+      ["周一", "12°", "4°"]
     ];
 
     return '<div class="weather-hero">' +
-      '<div class="weather-city">上海</div>' +
-      '<p class="weather-temp">18°</p>' +
-      '<p class="weather-desc">晴 · 体感 17°</p>' +
-      '<p class="weather-range">最高 18° / 最低 11° · 东南风 2 级</p>' +
+      '<div class="weather-city">首尔</div>' +
+      '<p class="weather-temp">12°</p>' +
+      '<p class="weather-desc">多云 · 体感 10°</p>' +
+      '<p class="weather-range">最高 13° / 最低 6° · 西北风 3 级</p>' +
       "</div>" +
       '<div class="hourly">' + hours.map(function (hour) {
         return '<div class="hour-card">' + hour[0] + "<b>" + hour[1] + "</b>" + hour[2] + "</div>";
@@ -1683,19 +1623,33 @@
 
   /* ================= Safari ================= */
   function safariBodyHTML() {
-    return '<div class="safari-bar">' +
-      '<div class="safari-url"><svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-globe"></use></svg>starphone.local</div>' +
+    const favs = [
+      { label: "微博", icon: "微", act: 'data-action="safari-topic" data-tip="微博网页版在准备中"' },
+      { label: "Instagram", icon: "Ins", act: 'data-action="safari-topic" data-tip="Instagram 网页版在准备中"' },
+      { label: "X", icon: "X", act: 'data-action="safari-topic" data-tip="X 网页版在准备中"' },
+      { label: "Kakao", icon: "K", act: 'data-action="safari-topic" data-tip="KakaoTalk 网页版在准备中"' },
+      { label: "星音", icon: "♪", act: 'data-action="open-music"' },
+      { label: "音乐", icon: "♫", act: 'data-action="open-music"' },
+      { label: "热搜", icon: "热", act: 'data-action="safari-topic" data-tip="热搜网页版在准备中"' },
+      { label: "苹果", icon: "★", act: 'data-action="safari-topic" data-tip="apple.com 网页在准备中"' }
+    ];
+    const favHtml = favs.map(function (f) {
+      return '<button class="safari-fav" type="button" ' + f.act + ">" +
+        "<i>" + f.icon + "</i><span>" + f.label + "</span></button>";
+    }).join("");
+
+    return '<div class="safari-start">' +
+      '<div class="safari-search">' +
+      '<span class="safari-aa">aA</span>' +
+      '<span class="safari-field"><svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-globe"></use></svg>搜索或输入网站名称</span>' +
+      '<span class="safari-reload">↻</span>' +
       "</div>" +
-      '<div class="safari-page">' +
-      "<h2>Logic</h2>" +
-      "<p>把夜色写成旋律。选择音符、排列组合，就能拥有一首属于自己的歌。所有音色都在浏览器里实时合成。</p>" +
-      '<button class="safari-link" type="button" data-action="open-music">打开编曲器<span>›</span></button>' +
-      "</div>" +
-      '<div class="fav-grid">' +
-      '<button class="fav" type="button" data-action="safari-topic" data-tip="微博网页版在准备中"><i>微</i>微博</button>' +
-      '<button class="fav" type="button" data-action="safari-topic" data-tip="Instagram 网页版在准备中"><i>Ins</i>Instagram</button>' +
-      '<button class="fav" type="button" data-action="safari-topic" data-tip="X 网页版在准备中"><i>X</i>X</button>' +
-      '<button class="fav" type="button" data-action="safari-topic" data-tip="KakaoTalk 网页版在准备中"><i>K</i>Kakao</button>' +
+      '<div class="safari-section-title">个人收藏</div>' +
+      '<div class="safari-favs">' + favHtml + "</div>" +
+      '<div class="safari-section-title">隐私报告</div>' +
+      '<div class="safari-card">过去 7 天，Safari 已阻止 3 个跨站跟踪器，你的浏览更私密。</div>' +
+      '<div class="safari-section-title">阅读列表</div>' +
+      '<div class="safari-card">还没有内容。把想稍后读的网页加进来，就会出现在这里。</div>' +
       "</div>";
   }
 
