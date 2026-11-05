@@ -105,14 +105,12 @@ window.PHONE_SCRIPT = {
     { t: "m", th: "wn", w: "wn", x: "{name}姐！" },
     { t: "m", th: "wn", w: "me", x: "干嘛" },
     { t: "m", th: "wn", w: "wn", x: "其实我是被你耍了对吧" },
-    { t: "a", th: "wn", o: [
-      { x: "？你在说什么啊", j: "tease-a1" },
-      { x: "是不是想让我请你吃辣炒猪肉了", j: "tease-a2" }
-    ] },
-    { id: "tease-a1", t: "m", th: "wn", w: "wn", x: "可以吃吗" },
-    { t: "goto", to: "tease-b" },
-    { id: "tease-a2", t: "m", th: "wn", w: "wn", x: "泰山哥明明加了你 kkt 对吧！" },
-    { id: "tease-b", t: "m", th: "wn", w: "me", x: "你猜" },
+    /* 玩家连发两条，云鹤再依次回两条 */
+    { t: "m", th: "wn", w: "me", x: "？你在说什么啊" },
+    { t: "m", th: "wn", w: "me", x: "是不是想让我请你吃辣炒猪肉了" },
+    { t: "m", th: "wn", w: "wn", x: "可以吃吗" },
+    { t: "m", th: "wn", w: "wn", x: "泰山哥明明加了你 kkt 对吧！" },
+    { t: "m", th: "wn", w: "me", x: "你猜" },
     { t: "m", th: "wn", w: "wn", x: "^^" },
     { t: "goto", to: "vinyl-1" },
 
