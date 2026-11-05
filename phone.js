@@ -2136,16 +2136,14 @@
       }
       return;
     }
+    if (kind === "ask" || kind === "act" || kind === "modal" || kind === "end") {
+      if (state.app === "kakao") renderApp();
+      updateStoryLayer();
+      return;
+    }
     if (kind === "request") {
+      if (state.app === "kakao") renderApp();
       showBanner({ app: "kakao", thread: "ts", who: info.from, title: "KakaoTalk", text: info.text });
-      updateStoryLayer();
-      return;
-    }
-    if (kind === "modal") {
-      updateStoryLayer();
-      return;
-    }
-    if (kind === "end") {
       updateStoryLayer();
     }
   }

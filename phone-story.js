@@ -190,6 +190,7 @@
               hint: text(node.hint || "")
             };
             save();
+            emit("act", { id: node.id });
             return;
           }
           state.pc += 1;
@@ -273,6 +274,7 @@
             options: options
           };
           save();
+          emit("ask", { thread: state.pending.thread });
           return;
         }
         case "end":
