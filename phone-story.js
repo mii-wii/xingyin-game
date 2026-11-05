@@ -340,6 +340,11 @@
             thread: node.th || state.open,
             options: options
           };
+          /* 玩家不在该聊天里时给持久提示（列表角标+「等你回复」），避免退出后剧情悄悄卡住 */
+          if (!state.pending.ig && !state.pending.friend && state.pending.thread && state.open !== state.pending.thread) {
+            state.peek[state.pending.thread] = "等你回复";
+            state.unread[state.pending.thread] = Math.max(state.unread[state.pending.thread] || 0, 1);
+          }
           save();
           emit("ask", { thread: state.pending.thread });
           return;
@@ -361,6 +366,8 @@
     const opt = node && node.o && node.o[index];
     if (!opt) return false;
     state.pending = null;
+    const threadKey = (node && node.th) || state.open;
+    if (threadKey && state.peek && state.peek[threadKey]) delete state.peek[threadKey];
     if (!opt.silent) {
       if (node.th === "ig") addComment({ w: "me", x: opt.x || opt.label || "" });
       else addMsg(node.th || state.open, "me", opt.x || opt.label || "", opt.img);
