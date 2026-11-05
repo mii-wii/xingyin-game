@@ -1803,9 +1803,10 @@
   }
 
   function kktMsgHTML(m, key, cast) {
-    const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
+    const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\';var r=this.closest(\'.kkt-row\');if(r&&!r.textContent.trim())r.remove();" />' : "";
     const quote = m.quote ? '<div class="kkt-quote">' + escapeHTML(m.quote) + "</div>" : "";
     if (m.from === "me") {
+      if (!m.text && !m.img) return "";
       return '<div class="kkt-row me"><div class="kkt-bubble me">' + quote + escapeHTML(m.text) + img + "</div></div>";
     }
     return '<div class="kkt-row you">' + dramaAvatar(key, "kkt-avatar") +
