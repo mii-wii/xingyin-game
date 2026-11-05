@@ -1826,7 +1826,8 @@
   /* ====== 允书的聊天放在微信里 ====== */
   function wxMsgHTML(m) {
     const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
-    return '<div class="msg ' + (m.from === "me" ? "me" : "you") + '">' + escapeHTML(m.text) + img + "</div>";
+    const quote = m.quote ? '<div class="kkt-quote">' + escapeHTML(m.quote) + "</div>" : "";
+    return '<div class="msg ' + (m.from === "me" ? "me" : "you") + '">' + quote + escapeHTML(m.text) + img + "</div>";
   }
 
   function wechatDramaBody() {
