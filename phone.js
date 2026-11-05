@@ -1971,6 +1971,10 @@
         const cw = igAuthor(c.who);
         return '<div class="post-comment"><b>' + escapeHTML(cw.handle) + "</b> " + escapeHTML(c.text) + "</div>";
       }).join("");
+      /* 演出公告的阵容文案按当前玩家名实时渲染，保证老存档也能同步 */
+      const capText = post.announce
+        ? "本周六 20:00 · " + (post.place || "u livehouse") + " · 阵容：ep000 / " + (st.name || "我") + " / %1 / RERE"
+        : post.caption;
       return '<article class="post" data-post="' + post.id + '">' +
         '<div class="post-head">' +
         '<span class="post-avatar avatar-img">' +
@@ -1991,7 +1995,7 @@
         '<button type="button" data-action="safari-topic" data-tip="链接已复制">' +
         '<svg class="ui-icon" viewBox="0 0 24 24"><use href="#i-share"></use></svg><span>分享</span></button>' +
         "</div>" +
-        '<div class="post-caption"><b>' + escapeHTML(who.handle) + "</b> " + escapeHTML(post.caption) + "</div>" +
+        '<div class="post-caption"><b>' + escapeHTML(who.handle) + "</b> " + escapeHTML(capText) + "</div>" +
         rows +
         "</article>";
     }).join("");
