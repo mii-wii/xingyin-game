@@ -2008,16 +2008,8 @@
   /* 剧情任务卡 / 提示 */
   const ROUND_STORE_KEY = "xingyin.round.v1";
   const WORK_STORE_KEY = "xingyin.work.v1";
+  const ROUND2_WANT_KEY = "xingyin.round2.want";
   const STORY_TOTAL_STEPS = 32;
-
-  function postToMusic(message) {
-    const frame = appLayer.querySelector(".music-frame");
-    if (frame && frame.contentWindow) {
-      frame.contentWindow.postMessage(message, "*");
-      return true;
-    }
-    return false;
-  }
 
   /* 直接读本地存档里的鼓点数：不依赖 iframe 是否加载，也不受加载竞态影响 */
   function storyRoundCfg() {
@@ -2083,10 +2075,13 @@
     const st = drama.state;
     if (id === "start-round2") {
       drama.action(id);
+      /* 用本地标记传递「开始第二轮」：编曲器读档时消费，postMessage 在 iframe 未加载完时会丢 */
+      try {
+        localStorage.setItem(ROUND2_WANT_KEY, "1");
+      } catch (err) {
+        /* 存储不可用时标记写不进去，编曲器端也有「第一轮已完成→自动进第二轮」的自愈 */
+      }
       openApp("music");
-      setTimeout(function () {
-        postToMusic({ source: "phone-story", type: "round2" });
-      }, 800);
       showToast("在编曲器里完成第二轮，四段都要提交");
     } else if (id === "send-fix") {
       storyLockFixBase(st);

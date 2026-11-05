@@ -49,6 +49,8 @@
   const LIB_SECTION_STEPS = 8;
   const SAVE_KEY = "xingyin.work.v1";
   const ROUND_KEY = "xingyin.round.v1";
+  /* 手机端写入的「开始第二轮」意图标记：编曲器读档时消费，避免 postMessage 加载竞态丢指令 */
+  const ROUND2_WANT_KEY = "xingyin.round2.want";
 
   const state = {
     root: 0,
@@ -2172,18 +2174,7 @@
   window.addEventListener("message", function (event) {
     const d = event.data;
     if (!d || d.source !== "phone-story") return;
-    if (d.type === "round2") {
-      storyStartRound2();
-    } else if (d.type === "query") {
-      storyNotify("query-result", {
-        id: d.id,
-        round: roundState.round,
-        finished: roundState.finished,
-        bass: trackCount("bass"),
-        drums: trackCount("drums"),
-        melody: trackCount("melody")
-      });
-    } else if (d.type === "toast" && d.text) {
+    if (d.type === "toast" && d.text) {
       showToast(d.text);
     }
   });
@@ -2234,10 +2225,27 @@
     });
   }
 
+  function roundConsumeRound2Want() {
+    try {
+      if (localStorage.getItem(ROUND2_WANT_KEY)) {
+        localStorage.removeItem(ROUND2_WANT_KEY);
+        return true;
+      }
+    } catch (err) {
+      /* 存储不可用时按无标记处理 */
+    }
+    return false;
+  }
+
   function roundBoot() {
     const cfg = roundConfig();
     if (!cfg || !Array.isArray(cfg.sections) || !cfg.sections.length) return;
     roundState.active = true;
+    /* 手机端点了「开始第二次编曲」：直接进入第二轮（音符已在存档里，storyStartRound2 会保留） */
+    if (roundConsumeRound2Want()) {
+      storyStartRound2();
+      return;
+    }
     const saved = roundReadSaved();
     if (saved) {
       roundApplyBase(saved);
@@ -2269,6 +2277,11 @@
       let index = 0;
       while (index < total && passed[index]) index += 1;
       if (index >= total) {
+        /* 「第一轮已完成」是残留状态（第二轮指令曾丢失）：自愈直接进入第二轮 */
+        if (roundState.round === 1) {
+          storyStartRound2();
+          return;
+        }
         roundEnter(total - 1);
         roundFinish();
         return;
