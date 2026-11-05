@@ -946,15 +946,17 @@
     if (!window.Drama) return "";
     const st = drama.state;
     const list = st.threads.ys || [];
-    if (!list.length) return "";
+    const peek = st.peek && st.peek.ys;
+    if (!list.length && !peek) return "";
     const last = list[list.length - 1];
     const unread = st.unread.ys || 0;
     const name = (drama.cast.ys && drama.cast.ys.name) || "允书";
+    const preview = peek || (last ? (last.text || "[图片]") : "发来一条新消息");
     return '<button class="list-row" type="button" data-chat="ys">' +
       '<span class="avatar avatar-img"><img src="assets/story/ys-avatar.jpg" alt="' + name + '" onerror="this.parentNode.classList.add(\'avatar-text\');this.remove()"></span>' +
       '<span class="row-main">' +
       '<span class="row-title">' + name + (unread ? ' <span class="badge">' + unread + "</span>" : "") + "</span>" +
-      '<span class="row-sub">' + escapeHTML(last.text || "[图片]") + "</span>" +
+      '<span class="row-sub">' + escapeHTML(preview) + "</span>" +
       "</span>" +
       '<span class="row-meta">' + localTime() + "</span>" +
       "</button>";
@@ -1709,10 +1711,11 @@
     }
     ["ts", "wn"].forEach(function (key) {
       const list = st.threads[key] || [];
-      if (!list.length) return;
+      const peek = st.peek && st.peek[key];
+      if (!list.length && !peek) return;
       const last = list[list.length - 1];
       const unread = st.unread[key] || 0;
-      const preview = last.img ? "[图片]" : last.text;
+      const preview = peek || (last ? (last.img ? "[图片]" : last.text) : "发来一条新消息");
       rows += '<button class="list-row" type="button" data-chat="' + key + '">' +
         dramaAvatar(key) +
         '<span class="row-main">' +

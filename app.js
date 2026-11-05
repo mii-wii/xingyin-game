@@ -657,6 +657,7 @@
     bpmInput.value = String(state.bpm);
     bpmVal.textContent = String(state.bpm);
     renderTracks();
+    if (roundState.active) libScrollGridToSection(roundState.section);
     showToast("载入了「" + preset.name + "」，按播放听听看");
   }
 
@@ -716,6 +717,7 @@
     state.bassInstrument = BASS_TYPES[Math.floor(Math.random() * BASS_TYPES.length)];
     roundClampInstrument();
     renderTracks();
+    if (roundState.active) libScrollGridToSection(roundState.section);
     showToast("新灵感已装进轨道，按播放试试");
   }
 
@@ -2215,6 +2217,9 @@
     if (notesTabEl) notesTabEl.hidden = false;
     renderRoundNotes();
     renderTracks();
+    /* renderTracks 会重建网格、把滚动归零；完成后状态锁定在最后一段，必须把视图滚回该段，
+       否则玩家看到的是全部锁定的前几步，误以为界面卡死无法编曲 */
+    libScrollGridToSection(roundState.section);
     roundQueueSave(true);
     showToast("四段占位闭环已跑通");
     storyEvent("round-done", {

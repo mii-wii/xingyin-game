@@ -25,6 +25,8 @@
     notes: [],
     feed: [],
     unread: { ts: 0, wn: 0, ys: 0 },
+    /* 等待玩家打开聊天才发出来的消息预览：让列表在未进入聊天前也有持久提示 */
+    peek: {},
     request: null,
     pending: null,
     waiting: null,
@@ -148,6 +150,7 @@
     const item = { from: who === "me" ? "me" : "you", text: text(body), img: img || "" };
     if (quote) item.quote = text(quote);
     list.push(item);
+    if (state.peek && state.peek[key]) delete state.peek[key];
     if (who !== "me" && state.open !== key) {
       state.unread[key] = (state.unread[key] || 0) + 1;
     }
@@ -252,6 +255,9 @@
           if (node.w !== "me" && state.open !== key) {
             if (state.waiting !== "open:" + key) {
               state.waiting = "open:" + key;
+              /* 横幅之外再给列表一个持久的未读角标+预览，错过横幅也能找到 */
+              state.peek[key] = text(node.x);
+              state.unread[key] = Math.max(state.unread[key] || 0, 1);
               emit("wait-open", { thread: key, text: text(node.x) });
             }
             save();
@@ -403,7 +409,10 @@
 
   function setOpen(key) {
     state.open = key || "";
-    if (key) markRead(key);
+    if (key) {
+      markRead(key);
+      if (state.peek && state.peek[key]) delete state.peek[key];
+    }
     if (key && state.waiting === "open:" + key) {
       state.waiting = "";
       window.setTimeout(step, 320);
