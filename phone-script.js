@@ -122,11 +122,12 @@ window.PHONE_SCRIPT = {
     { t: "c", w: "wn", x: "看着像泰山哥爱去的店子" },
     { t: "like", w: "ts" },
     { t: "c", w: "ts", x: "啊 我去的时候这张都没货" },
-    { t: "a", th: "ts", o: [
+    /* 这是快拍评论区的回复，不走 KKT */
+    { t: "a", th: "ig", o: [
       { x: "看来我今天运气很好啊", j: "vinyl-reply" },
       { x: "（不回复）", silent: true, j: "ys-1" }
     ] },
-    { id: "vinyl-reply", t: "m", th: "ts", w: "ts", x: "^^" },
+    { id: "vinyl-reply", t: "c", w: "ts", x: "^^" },
 
     /* ---------- 允书约甜品 ---------- */
     { id: "ys-1", t: "m", th: "ys", w: "ys", x: "噗嘶噗嘶" },

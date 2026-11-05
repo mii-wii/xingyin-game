@@ -143,7 +143,9 @@
   function addComment(node) {
     const post = node.on && node.on !== "latest" ? findPost(node.on) : lastPost();
     if (!post) return;
-    post.comments.push({ who: node.w, text: text(node.x) });
+    const item = { who: node.w, text: text(node.x) };
+    post.comments.push(item);
+    emit("comment", { who: item.who, text: item.text, post: post.id });
   }
 
   function findPost(id) {
@@ -271,6 +273,7 @@
           state.pending = {
             kind: "ask",
             friend: node.kind === "friend",
+            ig: node.th === "ig",
             thread: node.th || state.open,
             options: options
           };
@@ -295,7 +298,10 @@
     const opt = node && node.o && node.o[index];
     if (!opt) return false;
     state.pending = null;
-    if (!opt.silent) addMsg(node.th || state.open, "me", opt.x || opt.label || "", opt.img);
+    if (!opt.silent) {
+      if (node.th === "ig") addComment({ w: "me", x: opt.x || opt.label || "" });
+      else addMsg(node.th || state.open, "me", opt.x || opt.label || "", opt.img);
+    }
     if (node.kind === "friend") {
       state.request = null;
     }

@@ -2941,6 +2941,46 @@ button {
   color: rgba(255, 255, 255, 0.85);
 }
 
+/* 快拍下的评论与回复 */
+.story-comments {
+  margin: 0 20px 12px;
+  max-height: 132px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.story-comment {
+  margin: 3px 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.story-comment b {
+  font-weight: 600;
+  color: #fff;
+}
+
+.story-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 20px 24px;
+}
+
+.story-choices button {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 12.5px;
+  line-height: 1.35;
+}
+
 /* ============ KKT 真实化 ============ */
 .app-page[data-app="kakao"] {
   background: #f7f7f7;

@@ -323,6 +323,7 @@
     clearPassError();
     screenEl.dataset.state = "unlocked";
     unlockChime();
+    flushBanners();
     if (window.Drama) updateStoryLayer();
     if (navigator.vibrate) navigator.vibrate(18);
   }
@@ -2005,16 +2006,42 @@
   }
 
   /* 快拍查看层 */
-  function openStoryViewer(index) {
+  let storyViewerIndex = -1;
+
+  function storyViewerHTML(index) {
     const st = drama.state;
     const story = st.feed.filter(function (p) { return p.story; })[index];
-    if (!story) return;
-    storyLayer.classList.add("is-open");
-    storyLayer.innerHTML = '<div class="story-viewer" data-close-viewer>' +
+    if (!story) return "";
+    const comments = story.comments.map(function (c) {
+      const cw = igAuthor(c.who);
+      return '<div class="story-comment"><b>' + escapeHTML(cw.handle) + "</b> " + escapeHTML(c.text) + "</div>";
+    }).join("");
+    const pend = st.pending;
+    const choices = pend && pend.kind === "ask" && pend.ig
+      ? '<div class="story-choices">' + pend.options.map(function (o, i) {
+        return '<button type="button" data-ig-choice="' + i + '">' + escapeHTML(o.label) + "</button>";
+      }).join("") + "</div>"
+      : "";
+    return '<div class="story-viewer" data-close-viewer>' +
       '<div class="story-viewer-top"><span>' + escapeHTML(igAuthor(story.who).name) + "</span>" +
       '<button type="button" data-close-viewer>×</button></div>' +
       '<div class="story-viewer-body">' + igMediaHTML(story) + "</div>" +
-      '<div class="story-viewer-cap">' + escapeHTML(story.caption) + "</div></div>";
+      '<div class="story-viewer-cap">' + escapeHTML(story.caption) + "</div>" +
+      (comments ? '<div class="story-comments">' + comments + "</div>" : "") +
+      choices + "</div>";
+  }
+
+  function openStoryViewer(index) {
+    const html = storyViewerHTML(index);
+    if (!html) return;
+    storyViewerIndex = index;
+    storyLayer.classList.add("is-open");
+    storyLayer.innerHTML = html;
+  }
+
+  function refreshStoryViewer() {
+    if (storyViewerIndex < 0 || !storyLayer.classList.contains("is-open")) return;
+    storyLayer.innerHTML = storyViewerHTML(storyViewerIndex);
   }
 
   /* 剧情任务卡 / 提示 */
@@ -2123,7 +2150,14 @@
   }
 
   storyLayer.addEventListener("click", function (event) {
+    const igChoice = event.target.closest("[data-ig-choice]");
+    if (igChoice) {
+      drama.answer(Number(igChoice.dataset.igChoice));
+      refreshStoryViewer();
+      return;
+    }
     if (event.target.closest("[data-close-viewer]")) {
+      storyViewerIndex = -1;
       storyLayer.classList.remove("is-open");
       storyLayer.innerHTML = "";
       updateStoryLayer();
@@ -2168,10 +2202,19 @@
   let bannerBusy = false;
   let bannerTimer = 0;
 
+  function bannersBlocked() {
+    return screenEl.dataset.state === "locked" || screenEl.dataset.state === "passcode";
+  }
+
   function showBanner(item) {
     if (!item) return;
     bannerQueue.push(item);
-    if (!bannerBusy) nextBanner();
+    if (!bannerBusy && !bannersBlocked()) nextBanner();
+  }
+
+  /* 解锁后把锁屏期间积攒的通知放出来 */
+  function flushBanners() {
+    if (!bannerBusy && bannerQueue.length) nextBanner();
   }
 
   /* 剧情新任务：用通知横幅提醒玩家该做什么，点击回到桌面去点任务卡 */
@@ -2212,6 +2255,7 @@
     phoneBanner.dataset.app = item.app || "";
     phoneBanner.dataset.thread = item.thread || "";
     phoneBanner.dataset.home = item.home ? "1" : "";
+    phoneBanner.dataset.story = item.storyId || "";
     phoneBanner.hidden = false;
     window.clearTimeout(bannerTimer);
     bannerTimer = window.setTimeout(function () {
@@ -2233,6 +2277,17 @@
     window.clearTimeout(bannerTimer);
     if (phoneBanner.dataset.home) {
       closeApps();
+      return;
+    }
+    if (appId === "instagram" && phoneBanner.dataset.story && drama) {
+      openApp("instagram");
+      const stories = drama.state.feed.filter(function (p) { return p.story; });
+      for (let i = 0; i < stories.length; i += 1) {
+        if (stories[i].id === phoneBanner.dataset.story) {
+          openStoryViewer(i);
+          break;
+        }
+      }
       return;
     }
     openApp(appId);
@@ -2303,10 +2358,28 @@
       }
       return;
     }
+    if (kind === "comment") {
+      if (storyViewerIndex >= 0) refreshStoryViewer();
+      else if (state.app === "instagram") renderApp();
+      return;
+    }
     if (kind === "ask" || kind === "act" || kind === "modal" || kind === "end") {
       if (kind === "act") {
         const p = drama.state.pending;
         if (p && p.kind === "action") showTaskBanner(p);
+      }
+      if (kind === "ask" && info.thread === "ig") {
+        refreshStoryViewer();
+        const last = drama.state.feed[0] || {};
+        showBanner({
+          app: "instagram",
+          label: "新评论",
+          title: "Instagram",
+          text: "有人评论了你的快拍，点开看看并回复",
+          storyId: last.story ? last.id : ""
+        });
+        updateStoryLayer();
+        return;
       }
       if ((state.app === "kakao" || state.app === "wechat") && !dramaChatSync()) renderApp();
       updateStoryLayer();
