@@ -266,6 +266,15 @@
         case "post":
           addPost(node);
           state.pc += 1;
+          /* 紧跟在这条帖子后的点赞/评论一起生效，避免刚打开 IG 时看到 0 评论 */
+          while (state.pc < list.length) {
+            const next = list[state.pc];
+            if (!next || (next.t !== "c" && next.t !== "like")) break;
+            if (next.on && next.on !== "latest") break;
+            if (next.t === "c") addComment(next);
+            else addLike(next);
+            state.pc += 1;
+          }
           save();
           queueTick(node.w === "me" ? 700 : 1700);
           return;
