@@ -374,6 +374,7 @@
     if (frame) frame.src = "about:blank";
     closeApps();
     screenEl.dataset.state = "locked";
+    updateStoryLayer();
     beep(420, 0.08, "sine", 0.035);
   }
 
@@ -385,8 +386,8 @@
     state.chat = null;
     state.noteEditing = null;
     if (window.Drama) drama.setOpen("");
-    updateStoryLayer();
     screenEl.dataset.state = "unlocked";
+    updateStoryLayer();
     clearTimeout(closeTimer);
     closeTimer = setTimeout(function () {
       if (screenEl.dataset.state !== "app") {
@@ -404,9 +405,9 @@
     state.chat = null;
     state.noteEditing = null;
     if (window.Drama) drama.setOpen("");
+    screenEl.dataset.state = "app";
     updateStoryLayer();
     renderApp();
-    screenEl.dataset.state = "app";
     beep(980, 0.05, "sine", 0.03);
   }
 
@@ -1999,6 +2000,7 @@
     const st = drama.state;
     const story = st.feed.filter(function (p) { return p.story; })[index];
     if (!story) return;
+    storyLayer.classList.add("is-open");
     storyLayer.innerHTML = '<div class="story-viewer" data-close-viewer>' +
       '<div class="story-viewer-top"><span>' + escapeHTML(igAuthor(story.who).name) + "</span>" +
       '<button type="button" data-close-viewer>×</button></div>' +
@@ -2115,6 +2117,7 @@
     if (event.target.closest("[data-close-viewer]")) {
       storyLayer.classList.remove("is-open");
       storyLayer.innerHTML = "";
+      updateStoryLayer();
       return;
     }
     const nameOk = event.target.closest("[data-name-ok]");
