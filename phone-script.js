@@ -111,7 +111,7 @@ window.PHONE_SCRIPT = {
     { t: "m", th: "wn", w: "wn", x: "可以吃吗" },
     { t: "m", th: "wn", w: "wn", x: "泰山哥明明加了你 kkt 对吧！" },
     { t: "m", th: "wn", w: "me", x: "你猜" },
-    { t: "m", th: "wn", w: "wn", x: "^^" },
+    { t: "m", th: "wn", w: "me", x: "^^" },
     { t: "goto", to: "vinyl-1" },
 
     /* ---------- 彩胶快拍 ---------- */
