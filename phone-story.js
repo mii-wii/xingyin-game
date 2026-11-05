@@ -196,10 +196,19 @@
           break;
         case "m": {
           const key = node.th || (node.w === "me" ? state.open : node.w);
+          /* 玩家进入聊天界面后，人物才开始发消息 */
+          if (node.w !== "me" && state.open !== key) {
+            if (state.waiting !== "open:" + key) {
+              state.waiting = "open:" + key;
+              emit("wait-open", { thread: key, text: text(node.x) });
+            }
+            save();
+            return;
+          }
           addMsg(key, node.w, node.x, node.img);
           state.pc += 1;
           save();
-          queueTick(560);
+          queueTick(node.w === "me" ? 800 : 1100);
           return;
         }
         case "post":
@@ -329,6 +338,10 @@
   function setOpen(key) {
     state.open = key || "";
     if (key) markRead(key);
+    if (key && state.waiting === "open:" + key) {
+      state.waiting = "";
+      window.setTimeout(step, 320);
+    }
   }
 
   function setName(name) {

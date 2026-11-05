@@ -2110,6 +2110,20 @@
       }
       return;
     }
+    if (kind === "wait-open") {
+      const chatOpen = state.app === "kakao" && state.chat && state.chat.key === info.thread;
+      if (!chatOpen) {
+        showBanner({
+          app: "kakao",
+          thread: info.thread,
+          who: info.thread,
+          title: "KakaoTalk",
+          text: info.text || "发来一条新消息"
+        });
+      }
+      updateStoryLayer();
+      return;
+    }
     if (kind === "post") {
       if (state.app === "instagram") renderApp();
       if (info.who !== "me") {
