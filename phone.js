@@ -1033,7 +1033,8 @@
       if (!list) return;
       list.push({ from: "me", text: text, img: "" });
       window.Drama.save();
-      renderApp();
+      if (!syncKktChat()) renderApp();
+      input.value = "";
       beep(1040, 0.06, "sine", 0.035);
       return;
     }
@@ -1750,7 +1751,7 @@
     const st = drama.state;
     const list = st.threads[key] || [];
     const cast = drama.cast[key] || { name: key };
-    let html = '<div class="chat-screen kkt-screen">';
+    let html = '<div class="chat-screen kkt-screen" data-shown="' + list.length + '">';
     if (st.request && key === "ts" && !list.length) {
       html += '<div class="kkt-request">' +
         '<span class="kkt-request-title">好友申请</span>' +
@@ -1761,30 +1762,63 @@
         "</span></div>";
     }
     list.forEach(function (m) {
-      const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
-      if (m.from === "me") {
-        html += '<div class="kkt-row me"><div class="kkt-bubble me">' + escapeHTML(m.text) + img + "</div></div>";
-      } else {
-        html += '<div class="kkt-row you">' + dramaAvatar(key, "kkt-avatar") +
-          '<div class="kkt-stack"><span class="kkt-name">' + escapeHTML(cast.name) + "</span>" +
-          '<div class="kkt-bubble">' + escapeHTML(m.text) + img + "</div></div></div>";
-      }
+      html += kktMsgHTML(m, key, cast);
     });
-    const pend = st.pending;
-    if (pend && pend.kind === "ask" && pend.thread === key && !pend.friend) {
-      html += '<div class="kkt-choices">';
-      pend.options.forEach(function (opt, i) {
-        html += '<button class="kkt-choice" type="button" data-choice="' + i + '">' +
-          escapeHTML(opt.label) + "</button>";
-      });
-      html += "</div>";
-    }
+    html += kktChoicesHTML(st.pending, key);
     html += "</div>" +
       '<div class="chat-input-row kkt-input-row">' +
       '<input class="chat-input" id="chatInput" type="text" placeholder="输入消息…" autocomplete="off" />' +
       '<button class="chat-send" type="button" data-action="send-chat">发送</button>' +
       "</div>";
     return html;
+  }
+
+  function kktMsgHTML(m, key, cast) {
+    const img = m.img ? '<img class="kkt-photo" src="' + m.img + '" alt="" onerror="this.style.display=\'none\'" />' : "";
+    if (m.from === "me") {
+      return '<div class="kkt-row me"><div class="kkt-bubble me">' + escapeHTML(m.text) + img + "</div></div>";
+    }
+    return '<div class="kkt-row you">' + dramaAvatar(key, "kkt-avatar") +
+      '<div class="kkt-stack"><span class="kkt-name">' + escapeHTML(cast.name) + "</span>" +
+      '<div class="kkt-bubble">' + escapeHTML(m.text) + img + "</div></div></div>";
+  }
+
+  function kktChoicesHTML(pend, key) {
+    if (!pend || pend.kind !== "ask" || pend.thread !== key || pend.friend) return "";
+    let html = '<div class="kkt-choices">';
+    pend.options.forEach(function (opt, i) {
+      html += '<button class="kkt-choice" type="button" data-choice="' + i + '">' +
+        escapeHTML(opt.label) + "</button>";
+    });
+    return html + "</div>";
+  }
+
+  /* 增量刷新聊天：只追加新消息，不整页重绘（避免闪屏） */
+  function syncKktChat() {
+    const screen = appLayer.querySelector(".kkt-screen");
+    if (!screen || !state.chat) return false;
+    const key = state.chat.key;
+    const st = drama.state;
+    const list = st.threads[key] || [];
+    const cast = drama.cast[key] || { name: key };
+    const shown = Number(screen.dataset.shown || 0);
+    const oldChoices = screen.querySelector(".kkt-choices");
+    if (oldChoices) oldChoices.remove();
+    let added = 0;
+    if (list.length > shown) {
+      let html = "";
+      for (let i = shown; i < list.length; i += 1) html += kktMsgHTML(list[i], key, cast);
+      screen.insertAdjacentHTML("beforeend", html);
+      screen.dataset.shown = String(list.length);
+      added = list.length - shown;
+    }
+    const choices = kktChoicesHTML(st.pending, key);
+    if (choices) screen.insertAdjacentHTML("beforeend", choices);
+    if (added) {
+      const body = appLayer.querySelector(".app-body");
+      if (body) body.scrollTop = body.scrollHeight;
+    }
+    return true;
   }
 
   function playerHandle(name) {
@@ -2104,7 +2138,7 @@
   function onDramaChange(kind, info) {
     if (kind === "msg") {
       const appOpen = state.app === "kakao" && state.chat && state.chat.key === info.thread;
-      if (appOpen) renderApp();
+      if (appOpen && !syncKktChat()) renderApp();
       if (info.who !== "me" && !appOpen) {
         showBanner({ app: "kakao", thread: info.thread, who: info.thread, title: "KakaoTalk", text: info.text });
       }
@@ -2137,7 +2171,7 @@
       return;
     }
     if (kind === "ask" || kind === "act" || kind === "modal" || kind === "end") {
-      if (state.app === "kakao") renderApp();
+      if (state.app === "kakao" && !syncKktChat()) renderApp();
       updateStoryLayer();
       return;
     }
