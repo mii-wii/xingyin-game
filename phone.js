@@ -1923,7 +1923,15 @@
       ppparksh: "ppparksh",
       u: "u.livehouse"
     };
-    return { name: c.name, handle: "@" + (handles[key] || key), avatar: c.avatar, letter: c.letter };
+    /* IG 上的账号名用英文/ID，不显示中文姓名 */
+    const names = {
+      ts: "Taesan",
+      wn: "Woonhak",
+      myng: "myng",
+      ppparksh: "ppparksh",
+      u: "u livehouse"
+    };
+    return { name: names[key] || c.name, handle: "@" + (handles[key] || key), avatar: c.avatar, letter: c.letter };
   }
 
   function igMediaHTML(post) {
@@ -2165,6 +2173,18 @@
     if (!bannerBusy) nextBanner();
   }
 
+  /* 剧情新任务：用通知横幅提醒玩家该做什么，点击回到桌面去点任务卡 */
+  function showTaskBanner(pending) {
+    const isStory = pending.id.indexOf("post-story") === 0;
+    showBanner({
+      app: isStory ? "instagram" : "music",
+      label: "新任务",
+      title: isStory ? "Instagram" : "Logic",
+      text: pending.label + (pending.hint ? "：" + pending.hint : ""),
+      home: true
+    });
+  }
+
   function nextBanner() {
     const item = bannerQueue.shift();
     if (!item) {
@@ -2178,14 +2198,19 @@
       ? '<span class="pb-icon icon-ig">' + ICONS.instagram + "</span>"
       : item.app === "wechat"
         ? '<span class="pb-icon icon-wechat">' + ICONS.wechat + "</span>"
-        : '<span class="pb-icon icon-kakao">' + ICONS.kakao + "</span>";
+        : item.app === "music"
+          ? '<span class="pb-icon icon-music">' + ICONS.music + "</span>"
+          : '<span class="pb-icon icon-kakao">' + ICONS.kakao + "</span>";
+    let head = cast ? cast.name : (item.label || item.title);
+    if (item.app === "instagram" && item.who && item.who !== "me") head = igAuthor(item.who).name;
     phoneBanner.innerHTML = icon +
-      '<span class="pb-main"><b>' + (cast ? cast.name : item.title) + "</b>" +
+      '<span class="pb-main"><b>' + head + "</b>" +
       '<span class="pb-app">' + item.title + "</span>" +
       "<span class=\"pb-text\">" + escapeHTML(item.text || "") + "</span></span>" +
       '<span class="pb-time">现在</span>';
     phoneBanner.dataset.app = item.app || "";
     phoneBanner.dataset.thread = item.thread || "";
+    phoneBanner.dataset.home = item.home ? "1" : "";
     phoneBanner.hidden = false;
     window.clearTimeout(bannerTimer);
     bannerTimer = window.setTimeout(function () {
@@ -2205,6 +2230,10 @@
     bannerBusy = false;
     phoneBanner.hidden = true;
     window.clearTimeout(bannerTimer);
+    if (phoneBanner.dataset.home) {
+      closeApps();
+      return;
+    }
     openApp(appId);
     if (thread && (appId === "kakao" || (appId === "wechat" && thread === "ys"))) {
       state.chat = { app: appId, key: thread };
@@ -2274,6 +2303,10 @@
       return;
     }
     if (kind === "ask" || kind === "act" || kind === "modal" || kind === "end") {
+      if (kind === "act") {
+        const p = drama.state.pending;
+        if (p && p.kind === "action") showTaskBanner(p);
+      }
       if ((state.app === "kakao" || state.app === "wechat") && !dramaChatSync()) renderApp();
       updateStoryLayer();
       return;

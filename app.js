@@ -1819,27 +1819,6 @@
     bar.hidden = false;
   }
 
-  function roundShowKkt(kkt) {
-    const wrap = document.getElementById("kktChips");
-    if (!wrap) return;
-    if (roundState.kktTimer) {
-      window.clearTimeout(roundState.kktTimer);
-      roundState.kktTimer = null;
-    }
-    if (!kkt) {
-      wrap.hidden = true;
-      wrap.innerHTML = "";
-      return;
-    }
-    const preview = typeof kkt.preview === "string" && kkt.preview ? kkt.preview : "新消息";
-    wrap.innerHTML = '<span class="kkt-chip"><b>KakaoTalk</b><span>' + libEsc(preview) + "</span></span>";
-    wrap.hidden = false;
-    roundState.kktTimer = window.setTimeout(function () {
-      roundState.kktTimer = null;
-      wrap.hidden = true;
-    }, 6000);
-  }
-
   /* ---------- 编曲备注：按段留档，侧边可翻阅 ---------- */
   function renderRoundNotes() {
     if (!notesHistoryEl) return;
@@ -2112,7 +2091,6 @@
     roundState.fails = 0;
 
     roundShowReaction(section && section.reaction);
-    roundShowKkt(section && section.kkt);
     const kkt = (section && section.kkt) || {};
     storyNotify("kkt", { thread: kkt.thread || "star", text: kkt.preview || "" });
     showStoryHint((section && section.onPass) || "");
@@ -2216,7 +2194,7 @@
     setFromArray("bass", []);
     setFromArray("drums", []);
     roundApplyBase(null);
-    roundShowKkt(null);
+
     renderRoundNotes();
     roundEnter(0);
     showToast("已清空进度，从第 1 段重新开始");

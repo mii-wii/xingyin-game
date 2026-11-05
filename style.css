@@ -1814,39 +1814,6 @@ button:active {
   color: #f0e8ff;
 }
 
-.kkt-chips {
-  margin-bottom: 9px;
-}
-
-.kkt-chip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 8px 12px;
-  border-radius: 10px;
-  background: #2b2a2f;
-  border: 1px solid rgba(255, 214, 10, 0.28);
-  font-size: 12px;
-  color: #f2e7c2;
-}
-
-.kkt-chip b {
-  flex: 0 0 auto;
-  font-size: 9.5px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  color: var(--yellow);
-}
-
-.kkt-chip span {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* ===== 段落闭环 · 底部段落条 ===== */
 .app[data-round="on"] .remix-bar {
   gap: 6px;
