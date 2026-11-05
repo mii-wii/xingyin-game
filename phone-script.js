@@ -32,6 +32,7 @@ window.PHONE_SCRIPT = {
     { id: "ts-reply-1", t: "m", th: "ts", w: "ts", x: "🤝" },
     { t: "goto", to: "wn-start" },
     { id: "ts-reply-2", t: "m", th: "ts", w: "ts", x: "真荣幸啊。" },
+    { t: "m", th: "ts", w: "me", img: "assets/story/emoji-cute.jpg" },
     { t: "goto", to: "wn-start" },
 
     /* ---------- 金云鹤来探口风 ---------- */

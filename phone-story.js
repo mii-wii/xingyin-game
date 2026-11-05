@@ -60,12 +60,8 @@
     const list = flow();
     if (!state.pcKey) return;
     if (nodeKey(list[state.pc]) === state.pcKey) return;
-    for (let i = 0; i < list.length; i += 1) {
-      if (nodeKey(list[i]) === state.pcKey) {
-        state.pc = i;
-        return;
-      }
-    }
+
+    /* 优先用唯一 id 定位，最稳 */
     const id = state.pcKey.split("§")[0];
     if (id) {
       for (let i = 0; i < list.length; i += 1) {
@@ -75,7 +71,27 @@
         }
       }
     }
-    if (state.pc > list.length) state.pc = list.length;
+
+    /* 用内容指纹定位；goto/flag/like 等无文字节点指纹会重复，
+       取离当前进度最近的一个，避免误跳到剧本开头导致剧情卡住 */
+    let best = -1;
+    let bestDist = Infinity;
+    for (let i = 0; i < list.length; i += 1) {
+      if (nodeKey(list[i]) !== state.pcKey) continue;
+      const dist = Math.abs(i - state.pc);
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = i;
+      }
+    }
+    if (best >= 0) {
+      state.pc = best;
+      return;
+    }
+
+    /* 兜底：保持原下标并做边界钳制 */
+    if (state.pc >= list.length) state.pc = Math.max(0, list.length - 1);
+    if (state.pc < 0) state.pc = 0;
   }
 
   function save() {
