@@ -7,8 +7,8 @@
   const SAVE_KEY = "dreamphone.story.v1";
 
   const CAST = {
-    ts: { name: "GIANT MOUNTAIN", avatar: "assets/story/ts-avatar.jpg", letter: "G", tone: "av-ts" },
-    wn: { name: "金云鹤", avatar: "assets/story/wn-avatar.jpg", letter: "鹤", tone: "av-wn" },
+    ts: { name: "GIANT MOUNTAIN", avatar: "assets/story/ts-avatar.jpg", igAvatar: "assets/story/ts-ig-avatar.jpg", letter: "G", tone: "av-ts" },
+    wn: { name: "金云鹤", avatar: "assets/story/wn-avatar.jpg", igAvatar: "assets/story/wn-ig-avatar.jpg", letter: "鹤", tone: "av-wn" },
     ys: { name: "允书", avatar: "assets/story/ys-avatar.jpg", letter: "允", tone: "av-ys" },
     myng: { name: "myng", avatar: "assets/story/myng-avatar.jpg", letter: "m", tone: "av-myng" },
     ppparksh: { name: "ppparksh", avatar: "assets/story/ppparksh-avatar.jpg", letter: "p", tone: "av-pp" },

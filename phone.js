@@ -1892,7 +1892,8 @@
       ppparksh: "ppparksh",
       u: "u livehouse"
     };
-    return { name: names[key] || c.name, handle: "@" + (handles[key] || key), avatar: c.avatar, letter: c.letter };
+    /* IG 使用专用头像（igAvatar），没有配置时回退到 KKT 头像 */
+    return { name: names[key] || c.name, handle: "@" + (handles[key] || key), avatar: c.igAvatar || c.avatar, letter: c.letter };
   }
 
   function igMediaHTML(post) {
