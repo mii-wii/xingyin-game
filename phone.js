@@ -1886,7 +1886,7 @@
     };
     /* IG 上的账号名用英文/ID，不显示中文姓名 */
     const names = {
-      ts: "Taesan",
+      ts: "GIANT MOUNTAIN",
       wn: "Woonhak",
       myng: "myng",
       ppparksh: "ppparksh",
